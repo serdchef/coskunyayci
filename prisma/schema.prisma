@@ -1,0 +1,142 @@
+﻿generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([email])
+  @@map("users")
+}
+
+enum ProductType {
+  CLASSIC
+  PISTACHIO
+  CHOCOLATE
+  SYRUP
+  SPECIALTY
+  CORPORATE
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  description String   @db.Text
+  productType ProductType
+  category    String
+  region      String
+  basePrice   Decimal  @db.Decimal(10, 2)
+  image       String
+  variants    ProductVariant[]
+  orderItems  OrderItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([category])
+  @@index([productType])
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String
+  price     Decimal  @db.Decimal(10, 2)
+  stock     Int      @default(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([productId, size])
+  @@map("product_variants")
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        OrderStatus @default(CONFIRMED)
+  totalPrice    Decimal  @db.Decimal(10, 2)
+  items         OrderItem[]
+  address       String
+  city          String
+  zipCode       String
+  courierName   String?  @default("Yola Çıkılıyor")
+  courierPhone  String?
+  locations     CourierLocation[]
+  notifications Notification[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  CONFIRMED
+  BAKING
+  READY
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model CourierLocation {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  latitude  Decimal  @db.Decimal(10, 8)
+  longitude Decimal  @db.Decimal(11, 8)
+  address   String?
+  status    String   @default("IN_TRANSIT")
+  timestamp DateTime @default(now())
+  @@index([orderId])
+  @@map("courier_locations")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  message   String   @db.Text
+  channel   String   @default("EMAIL")
+  sentAt    DateTime @default(now())
+  read      Boolean  @default(false)
+  @@index([orderId])
+  @@index([type])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  ORDER_CONFIRMED
+  BAKING_STARTED
+  READY_FOR_SHIPPING
+  COURIER_ASSIGNED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  @@unique([orderId, productId])
+  @@map("order_items")
+}

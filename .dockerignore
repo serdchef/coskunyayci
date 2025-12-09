@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+Dockerfile*
+docker-compose.yml
+.env.local
+.env.*.local
+/*.log
+coverage
+/.idea
+.vscode
+npm-debug.log
+pnpm-lock.yaml
+package-lock.json
