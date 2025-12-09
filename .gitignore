@@ -48,8 +48,9 @@ lerna-debug.log*
 prisma/migrations/*_migration
 
 # IDE
-.vscode/
 .idea/
+.vscode/*
+!.vscode/settings.json
 *.swp
 *.swo
 *~
