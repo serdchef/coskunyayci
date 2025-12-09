@@ -143,11 +143,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Products Section */}
+        {/* Products Section - Dynamic Bento Grid */}
         <section className="bg-primary-900 py-20">
           <div className="container mx-auto px-4">
             {/* Section Header */}
-            <div className="text-center mb-12">
+            <div className="text-center mb-16">
               <span className="inline-block px-4 py-2 bg-gold-500/20 text-gold-400 rounded-full text-sm font-medium mb-4">
                 ✦ KOLEKSİYONUMUZ ✦
               </span>
@@ -161,7 +161,7 @@ export default function HomePage() {
             </div>
             
             {/* Decorative Line */}
-            <div className="flex items-center justify-center mb-12">
+            <div className="flex items-center justify-center mb-16">
               <div className="h-px w-24 bg-gold-500/30" />
               <div className="mx-4 flex gap-2">
                 <div className="w-2 h-2 rounded-full bg-gold-500" />
@@ -171,15 +171,111 @@ export default function HomePage() {
               <div className="h-px w-24 bg-gold-500/30" />
             </div>
             
-            {/* Products Grid */}
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.slice(0, 8).map((product) => (
-                <ProductCard key={product.id} product={product} />
+            {/* Dynamic Bento Grid - Masonry Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-max">
+              {/* HERO: Signature Pistachio - Large Vertical Card (Featured) */}
+              {products[0] && (
+                <div className="md:col-span-1 lg:col-span-2 lg:row-span-2 group cursor-pointer">
+                  <div className="relative h-full min-h-96 md:min-h-full rounded-xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gold-500/40 via-transparent to-primary-900/60 z-10" />
+                    <div className="absolute inset-0 bg-primary-800/20 group-hover:bg-primary-900/10 transition-all duration-300 z-5" />
+                    <div className="w-full h-full bg-gradient-to-br from-green-800 to-primary-900 flex items-center justify-center">
+                      <div className="text-center z-10">
+                        <span className="inline-block px-4 py-1 bg-gold-500 text-primary-900 rounded-full text-xs font-bold mb-4">
+                          SIGNATURE SERIES
+                        </span>
+                        <h3 className="text-4xl font-serif font-bold text-white mb-2">{products[0].name}</h3>
+                        <p className="text-gold-300 text-lg mb-4">Antep Fıstığı Özel Seçim</p>
+                        <p className="text-cream-200 text-sm max-w-xs mx-auto mb-6">{products[0].description}</p>
+                        <div className="flex items-center justify-center gap-4">
+                          <span className="text-3xl font-bold text-gold-400">
+                            ₺{(products[0].priceCents / 100).toFixed(0)}
+                          </span>
+                          <button className="px-6 py-2 bg-gold-500 hover:bg-gold-600 text-primary-900 font-semibold rounded-lg transition-all">
+                            Sepete Ekle
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Regular Products Grid - Right Side */}
+              {products.slice(1, 7).map((product, idx) => (
+                <div key={product.id} className="group cursor-pointer">
+                  <div className="relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 bg-primary-800 h-full">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gold-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+                    <div className="p-4 md:p-5 flex flex-col h-full">
+                      <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-green-700 to-primary-900 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                        <span className="text-6xl">{idx % 2 === 0 ? '🥜' : '🍰'}</span>
+                      </div>
+                      <h4 className="text-lg font-semibold text-white mb-1 line-clamp-2">{product.name}</h4>
+                      <p className="text-cream-300 text-xs mb-3 line-clamp-2">{product.description}</p>
+                      <div className="mt-auto flex items-center justify-between pt-3 border-t border-gold-500/20">
+                        <span className="text-gold-400 font-bold">₺{(product.priceCents / 100).toFixed(0)}</span>
+                        <button className="px-3 py-1 bg-gold-500 hover:bg-gold-600 text-primary-900 text-xs font-semibold rounded transition-colors">
+                          Ekle
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Category Banner - Wide Tray Section */}
+            <div className="mt-16 relative rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all group">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-700 to-primary-900 z-0" />
+              <div className="absolute inset-0 bg-gradient-to-r from-gold-500/20 via-transparent to-transparent z-5 group-hover:from-gold-500/40 transition-all duration-300" />
+              <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-12">
+                <div>
+                  <span className="inline-block px-4 py-2 bg-gold-500 text-primary-900 rounded-full text-sm font-bold mb-4">
+                    ✦ KOLEKSİYON AYDINLATMASI ✦
+                  </span>
+                  <h3 className="text-4xl font-serif font-bold text-white mb-4">Tepsi Baklavalar</h3>
+                  <p className="text-cream-200 mb-6 text-lg">
+                    Özel davetler ve kutlamalar için şık sunumlar. Her tepsi, geleneksel reçete ile hazırlanmış en seçkin baklavalarımızdan oluşturulmuştur.
+                  </p>
+                  <Link href="/products?category=tepsi" className="inline-flex items-center px-8 py-3 bg-gold-500 hover:bg-gold-600 text-primary-900 font-bold rounded-lg transition-all">
+                    Tepsileri İncele
+                    <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
+                </div>
+                <div className="text-6xl text-center">
+                  🎁
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Products Grid */}
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {products.slice(7, 15).map((product, idx) => (
+                <div key={product.id} className="group cursor-pointer">
+                  <div className="relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 bg-primary-800 h-full">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gold-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+                    <div className="p-4 md:p-5 flex flex-col h-full">
+                      <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-green-700 to-primary-900 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
+                        <span className="text-6xl">{idx % 3 === 0 ? '🌰' : idx % 3 === 1 ? '🍮' : '💚'}</span>
+                      </div>
+                      <h4 className="text-lg font-semibold text-white mb-1 line-clamp-2">{product.name}</h4>
+                      <p className="text-cream-300 text-xs mb-3 line-clamp-2">{product.description}</p>
+                      <div className="mt-auto flex items-center justify-between pt-3 border-t border-gold-500/20">
+                        <span className="text-gold-400 font-bold">₺{(product.priceCents / 100).toFixed(0)}</span>
+                        <button className="px-3 py-1 bg-gold-500 hover:bg-gold-600 text-primary-900 text-xs font-semibold rounded transition-colors">
+                          Ekle
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
             
             {/* View All Button */}
-            <div className="text-center mt-12">
+            <div className="text-center mt-16">
               <Link href="/products" className="inline-flex items-center px-8 py-4 border-2 border-gold-500 text-gold-500 hover:bg-gold-500 hover:text-white font-semibold rounded-lg transition-all">
                 Tüm Ürünleri Görüntüle
                 <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
