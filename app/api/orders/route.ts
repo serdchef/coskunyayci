@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
         district: address?.district || null,
         zipCode: address?.zipCode || null,
         items: {
-          create: items.map((item: any) => ({
-            productName: item.name || item.productName,
+          create: items.map((item: { name?: string; productName?: string; quantity: number; price: number }) => ({
+            productName: item.name || item.productName || 'Unknown Product',
             quantity: item.quantity,
             price: item.price,
           })),
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         orderId: order.id,
         customerName: customer.name,
         customerEmail: customer.email,
-        items: order.items.map((item) => ({
+        items: order.items.map((item: { productName: string; quantity: number; price: number }) => ({
           productName: item.productName,
           quantity: item.quantity,
           price: item.price,
