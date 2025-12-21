@@ -104,7 +104,7 @@ model Order {
   userId        String?
   user          User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   addressId     String?
-  status        String            @default("CONFIRMED")
+  status        String            @default("CONFIRMED") // CONFIRMED | IN_OVEN | CRAFTING | SHIPPED | DELIVERED | CANCELLED
   totalPrice    Float
   items         OrderItem[]
   address       String?
@@ -120,6 +120,7 @@ model Order {
 
   @@index([userId])
   @@index([status])
+  @@index([createdAt])
   @@map("orders")
 }
 

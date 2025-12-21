@@ -39,7 +39,7 @@ export async function sendOrderConfirmation(orderData: OrderEmailData) {
     const customerEmailResult = await resend.emails.send({
       from: 'Coşkun Yaycı <orders@coskunyayci.com>',
       to: customerEmail,
-      subject: `✨ Siparişiniz Alındı - ${orderNumber || orderId}`,
+      subject: `✨ Siparişiniz Başarılı - #${orderNumber || orderId}`,
       react: OrderConfirmationEmail({ 
         ...orderData, 
         isAdmin: false 
@@ -47,11 +47,11 @@ export async function sendOrderConfirmation(orderData: OrderEmailData) {
     });
 
     // Send to admin
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@coskunyayci.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'serdchef@gmail.com';
     const adminEmailResult = await resend.emails.send({
       from: 'Coşkun Yaycı <orders@coskunyayci.com>',
       to: adminEmail,
-      subject: `🔔 Yeni Sipariş - ${customerName} - ${orderNumber || orderId}`,
+      subject: `🎯 Yeni Sipariş - #${orderNumber || orderId}`,
       react: OrderConfirmationEmail({ 
         ...orderData, 
         isAdmin: true 
