@@ -1,0 +1,265 @@
+# Phase 1 Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PHASE 1: DATABASE + AUTH + EMAIL                     │
+│                              (Zümrüt Temeller)                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                                    USER FLOW
+                                    =========
+
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│   Products   │────────>│   Checkout   │────────>│   Success    │
+│     Page     │  Add to │     Page     │ Submit  │     Page     │
+│              │  Cart   │              │         │              │
+└──────────────┘         └──────┬───────┘         └──────────────┘
+                                │                         ▲
+                                │ POST /api/orders        │ Fetch order
+                                ▼                         │
+                         ┌──────────────┐                │
+                         │  Order API   │────────────────┘
+                         │   (route.ts) │  Return orderId
+                         └──────┬───────┘
+                                │
+                    ┌───────────┴───────────┐
+                    ▼                       ▼
+            ┌───────────────┐       ┌──────────────┐
+            │   Database    │       │    Email     │
+            │   (Supabase)  │       │   (Resend)   │
+            └───────┬───────┘       └──────┬───────┘
+                    │                       │
+                    ▼                       ▼
+            ┌───────────────┐       ┌──────────────┐
+            │  Order saved  │       │ Confirmation │
+            │  with items   │       │    emails    │
+            └───────────────┘       └──────────────┘
+
+
+                                DATABASE SCHEMA
+                                ===============
+
+┌─────────────────┐
+│      User       │
+├─────────────────┤
+│ id (PK)         │
+│ email (unique)  │
+│ password        │
+│ name            │
+│ phone           │
+│ role            │
+│ locale          │──┐
+│ isActive        │  │
+│ lastLoginAt     │  │
+└─────────────────┘  │
+                     │
+                     │ has many
+                     │
+                     ▼
+            ┌─────────────────┐
+            │     Order       │
+            ├─────────────────┤
+            │ id (PK)         │
+            │ userId (FK)     │──────┐
+            │ status          │      │
+            │ totalPrice      │      │
+            │ address         │      │ has many
+            │ city            │      │
+            │ district        │      ▼
+            │ zipCode         │  ┌─────────────────┐
+            │ createdAt       │  │   OrderItem     │
+            └─────────────────┘  ├─────────────────┤
+                     │           │ id (PK)         │
+                     │           │ orderId (FK)    │
+                     │ has many  │ productName     │
+                     │           │ quantity        │
+                     ▼           │ price           │
+            ┌─────────────────┐  └─────────────────┘
+            │    Address      │
+            ├─────────────────┤
+            │ id (PK)         │
+            │ userId (FK)     │
+            │ street          │
+            │ city            │
+            │ district        │
+            │ zipCode         │
+            │ isDefault       │
+            └─────────────────┘
+
+
+                                  API ENDPOINTS
+                                  =============
+
+POST /api/orders
+├─ Create new order
+├─ Validate customer data
+├─ Save to database
+├─ Send confirmation emails
+└─ Return orderId
+
+GET /api/orders/[id]
+├─ Fetch order by ID
+├─ Include order items
+├─ Check authorization
+└─ Return order data
+
+GET /api/orders/my-orders
+├─ Require authentication
+├─ Fetch user's orders
+├─ Include order items
+└─ Return order list
+
+
+                                EMAIL TEMPLATES
+                                ===============
+
+┌────────────────────────────────────────┐
+│     ORDER CONFIRMATION EMAIL           │
+│  (Ghost Style - Luxury Minimal)        │
+├────────────────────────────────────────┤
+│  ✨ Siparişiniz Alındı                 │
+│                                        │
+│  ┌──────────────────────────────────┐ │
+│  │ Order Number: ORD-12345          │ │
+│  └──────────────────────────────────┘ │
+│                                        │
+│  Order Details:                        │
+│  • 2x Fıstıklı Baklava - 150.00 TL   │
+│  • 1x Cevizli Baklava - 120.00 TL    │
+│  ────────────────────────────────     │
+│  Total: 270.00 TL                     │
+│                                        │
+│  Delivery Address:                     │
+│  Atatürk Cad. No:123                  │
+│  Kadıköy, Istanbul                    │
+│  34000                                 │
+│                                        │
+│  Next Steps:                           │
+│  1️⃣ Email confirmation sent           │
+│  2️⃣ Order being prepared              │
+│  3️⃣ Tracking info via SMS             │
+│                                        │
+│  ────────────────────────────────     │
+│  Coşkun Yaycı                         │
+│  orders@coskunyayci.com               │
+└────────────────────────────────────────┘
+
+
+                             AUTHENTICATION FLOW
+                             ===================
+
+┌─────────────┐         ┌──────────────┐         ┌─────────────┐
+│   Login     │────────>│   NextAuth   │────────>│   Session   │
+│    Page     │ Submit  │   Callback   │ Create  │     JWT     │
+└─────────────┘         └──────────────┘         └─────────────┘
+                                                         │
+                                                         │ Store
+                                                         ▼
+                              ┌──────────────────────────────────┐
+                              │     Protected Routes              │
+                              │  • /siparislerim (orders)        │
+                              │  • /api/orders/my-orders         │
+                              └──────────────────────────────────┘
+
+
+                              MIDDLEWARE PROTECTION
+                              ====================
+
+Request to /siparislerim
+         │
+         ▼
+┌────────────────┐
+│  Middleware    │
+│  Check Session │
+└────────┬───────┘
+         │
+    ┌────┴────┐
+    │         │
+Authenticated  Not Authenticated
+    │         │
+    ▼         ▼
+ Allow    Redirect to
+ Access   /auth/login
+
+
+                           ENVIRONMENT VARIABLES
+                           =====================
+
+Required (Phase 1):
+├─ DATABASE_URL          → Supabase PostgreSQL
+├─ NEXTAUTH_SECRET       → Session encryption
+├─ NEXTAUTH_URL          → App URL
+├─ RESEND_API_KEY        → Email service
+└─ ADMIN_EMAIL           → Admin notifications
+
+Optional:
+├─ GOOGLE_CLIENT_ID      → Google OAuth
+└─ GOOGLE_CLIENT_SECRET  → Google OAuth
+
+
+                              FILE STRUCTURE
+                              ==============
+
+coskunyayci/
+├── app/
+│   ├── api/
+│   │   └── orders/
+│   │       ├── route.ts              [CREATE + LIST]
+│   │       ├── [id]/route.ts         [GET ONE]
+│   │       └── my-orders/route.ts    [USER ORDERS]
+│   ├── checkout/
+│   │   ├── page.tsx                  [CHECKOUT FORM]
+│   │   └── success/[orderId]/
+│   │       └── page.tsx              [SUCCESS PAGE]
+│   └── siparislerim/
+│       └── page.tsx                  [ORDER HISTORY]
+├── lib/
+│   ├── email.ts                      [EMAIL SERVICE]
+│   ├── emails/
+│   │   └── OrderConfirmation.tsx    [EMAIL TEMPLATE]
+│   ├── auth.ts                       [NEXTAUTH CONFIG]
+│   └── db.ts                         [PRISMA CLIENT]
+├── prisma/
+│   └── schema.prisma                 [DATABASE SCHEMA]
+├── middleware.ts                     [ROUTE PROTECTION]
+├── .env.example                      [ENV TEMPLATE]
+├── PHASE1_SETUP.md                   [SETUP GUIDE]
+├── PHASE1_SUMMARY.md                 [STATUS SUMMARY]
+└── verify-phase1.sh                  [VERIFICATION]
+
+
+                                  TECH STACK
+                                  ==========
+
+Frontend:
+├─ Next.js 14 (React)
+├─ TypeScript
+├─ Tailwind CSS
+└─ Framer Motion
+
+Backend:
+├─ Next.js API Routes
+├─ Prisma ORM
+├─ PostgreSQL (Supabase)
+└─ NextAuth.js
+
+Email:
+├─ Resend
+└─ React Email
+
+Authentication:
+├─ NextAuth.js
+├─ JWT Sessions
+└─ Google OAuth
+
+
+                                STATUS: ✅ COMPLETE
+                                ===================
+
+All code implemented and tested.
+Ready for production after user configuration.
+
+Setup time: 15-30 minutes
+Documentation: PHASE1_SETUP.md
+Verification: ./verify-phase1.sh
+```
