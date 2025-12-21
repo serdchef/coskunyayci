@@ -3,6 +3,59 @@ generator client {
 }
 
 datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String?  // hashed password (optional if using OAuth)
+  createdAt DateTime @default(now())
+  orders    Order[]
+  addresses Address[]
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  userId     String?
+  user       User?       @relation(fields: [userId], references: [id])
+  items      OrderItem[]
+  addressId  String?
+  address    Address?    @relation(fields: [addressId], references: [id])
+  totalPrice Float
+  status     String      @default("CONFIRMED")
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id])
+  productName String
+  quantity    Int
+  price       Float
+}
+
+model Address {
+  id       String @id @default(cuid())
+  userId   String?
+  user     User?  @relation(fields: [userId], references: [id])
+  street   String
+  city     String
+  district String
+  zipCode  String
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
