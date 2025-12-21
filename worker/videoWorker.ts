@@ -5,10 +5,13 @@
  */
 
 import { Queue, Worker, Job } from 'bullmq';
-import { VideoJobStatus, VideoProvider } from '@prisma/client';
 import { prisma } from '../lib/db';
 import { generateVideo, VideoJobParams } from '../lib/videoStudio';
 import logger from '../lib/logger';
+
+// Type definitions for string-based enums
+type VideoJobStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+type VideoProvider = 'RUNWAY' | 'SYNTHESIA' | 'STABLE_VIDEO' | 'INTERNAL';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
@@ -52,14 +55,14 @@ const videoWorker = new Worker(
       // Database'de status güncelle
       await prisma.videoJob.update({
         where: { id: videoJobId },
-        data: { status: VideoJobStatus.PROCESSING },
+        data: { status: 'PROCESSING' },
       });
 
       // Progress tracking
       job.updateProgress(10);
 
       // Video üret
-      const result = await generateVideo(params, VideoProvider.INTERNAL);
+      const result = await generateVideo(params, 'INTERNAL' as any);
 
       job.updateProgress(90);
 
@@ -68,7 +71,7 @@ const videoWorker = new Worker(
         await prisma.videoJob.update({
           where: { id: videoJobId },
           data: {
-            status: VideoJobStatus.COMPLETED,
+            status: 'COMPLETED',
             resultUrl: result.videoUrl,
             thumbnailUrl: result.thumbnailUrl,
             duration: result.duration,
@@ -101,7 +104,7 @@ const videoWorker = new Worker(
         await prisma.videoJob.update({
           where: { id: videoJobId },
           data: {
-            status: VideoJobStatus.FAILED,
+            status: 'FAILED',
             errorMessage: error.message,
             retryCount,
           },

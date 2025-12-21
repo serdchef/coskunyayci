@@ -2,6 +2,7 @@
 
 import type { Product } from '@/types';
 import Image from 'next/image';
+import Link from 'next/link';
  
 
 type ProductCardProps = {
@@ -14,6 +15,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const price = (((product.priceCents ?? 0) as number) / 100).toFixed(2);
 
   return (
+    <Link href={`/products/${product.sku || product.id}`} className="block cursor-pointer">
     <div className="group relative rounded-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2">
       {/* Glassmorphism arka plan */}
       <div className="absolute inset-0 bg-white/10 backdrop-blur-md border-2 border-gold-400/30 group-hover:border-gold-400/60 rounded-2xl transition-all" />
@@ -47,20 +49,24 @@ export default function ProductCard({ product }: ProductCardProps) {
       
       <div className="relative p-6">
       <div className="relative h-56 mb-6 bg-white/20 backdrop-blur-sm rounded-xl overflow-hidden group-hover:scale-105 transition-transform duration-500 border border-gold-400/20">
-        {product.imageUrl ? (
-          <Image
-            src={product.imageUrl as string}
+        {(product.image || product.imageUrl) ? (
+          <img
+            src={product.image || product.imageUrl || ''}
             alt={product.name ?? ''}
-            fill
-            className="object-cover"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Image load failed:', product.image || product.imageUrl, e);
+            }}
+            onLoad={() => {
+              console.log('Image loaded:', product.image || product.imageUrl);
+            }}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-400">
-            <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-            </svg>
+            <span className="text-xs text-center">Resim yok: {product.name}</span>
           </div>
         )}
+        
         {product.isFeatured && (
           <span className="absolute top-2 right-2 badge badge-warning">
             Öne Çıkan
@@ -162,5 +168,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       </button>
     </div>
     </div>
+    </Link>
   );
 }

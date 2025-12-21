@@ -1,153 +1,172 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { motion } from 'framer-motion';
 
 export default function CheckoutSuccessPage({
   params,
 }: {
   params: { orderId: string };
 }) {
-  const [loading, setLoading] = useState(true);
-  const [orderData, setOrderData] = useState<any>(null);
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, staggerChildren: 0.2 },
+    },
+  };
 
-  useEffect(() => {
-    // Simulate fetching order data
-    const timer = setTimeout(() => {
-      setOrderData({
-        orderId: params.orderId,
-        status: 'CONFIRMED',
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('tr-TR'),
-        trackingLink: `/tracking/${params.orderId}`,
-      });
-      setLoading(false);
-    }, 1500);
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
 
-    return () => clearTimeout(timer);
-  }, [params.orderId]);
-
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cream to-gold-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin text-4xl mb-4">⏳</div>
-            <p className="text-gray-600">Siparişiniz işleniyor...</p>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
+  const checkmarkVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: { delay: 0.3, type: 'spring', stiffness: 100 },
+    },
+  };
 
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cream to-gold-100">
-        <div className="max-w-2xl mx-auto px-4 py-20">
-          {/* Success Card */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-12 border border-white/20 text-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-primary-900 py-12 md:py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="max-w-2xl mx-auto"
+          >
             {/* Success Icon */}
-            <div className="text-6xl mb-6 animate-bounce">✅</div>
-
-            {/* Title */}
-            <h1 className="text-3xl md:text-4xl font-bold text-teal-900 mb-2">
-              Ödemeniz Başarılı!
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Siparişiniz alındı ve işleme alındı. Kısa süre içinde onay e-postası alacaksınız.
-            </p>
-
-            {/* Order Details */}
-            <div className="bg-teal-50 rounded-lg p-6 mb-8 border border-teal-200">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Sipariş Numarası</p>
-                  <p className="text-xl font-bold text-teal-900 font-mono break-all">
-                    {orderData?.orderId}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Tahmini Teslimat</p>
-                  <p className="text-xl font-bold text-teal-900">
-                    {orderData?.estimatedDelivery}
-                  </p>
-                </div>
+            <motion.div
+              variants={checkmarkVariants}
+              className="flex justify-center mb-8"
+            >
+              <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-2xl">
+                <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Status Timeline */}
-            <div className="mb-8">
-              <div className="space-y-4">
-                {[
-                  { icon: '✅', text: 'Ödeme Alındı', status: 'completed' },
-                  { icon: '⏳', text: 'Paketleme', status: 'pending' },
-                  { icon: '📦', text: 'Gönderim', status: 'pending' },
-                  { icon: '🚚', text: 'Teslimat', status: 'pending' },
-                ].map((step, idx) => (
-                  <div key={idx} className="flex items-center gap-4">
-                    <div className={`text-2xl w-8 ${step.status === 'completed' ? 'opacity-100' : 'opacity-50'}`}>
-                      {step.icon}
-                    </div>
-                    <span
-                      className={`font-semibold ${
-                        step.status === 'completed' ? 'text-teal-900' : 'text-gray-500'
-                      }`}
-                    >
-                      {step.text}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Info Box */}
-            <div className="bg-blue-50 rounded-lg p-4 mb-8 border border-blue-200">
-              <p className="text-sm text-blue-900">
-                📧 Onay e-postası <strong>{(typeof window !== 'undefined' && localStorage.getItem('userEmail')) || 'sizin@email.com'}</strong> adresine gönderildi.
+            {/* Heading */}
+            <motion.div variants={itemVariants} className="text-center mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+                Sipariş Başarılı!
+              </h1>
+              <p className="text-xl text-slate-300">
+                Teşekkür ederiz! Siparişiniz başarıyla alındı.
               </p>
+            </motion.div>
+
+            {/* Order ID Card */}
+            <motion.div
+              variants={itemVariants}
+              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 mb-8"
+            >
+              <div className="text-center">
+                <p className="text-slate-300 text-sm mb-2">Siparişinizin Takip Numarası</p>
+                <p className="text-3xl md:text-4xl font-bold text-amber-400 font-mono break-all">
+                  {params.orderId}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Info Cards */}
+            <div className="grid md:grid-cols-3 gap-4 mb-8">
+              <motion.div
+                variants={itemVariants}
+                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 text-center"
+              >
+                <div className="text-3xl mb-2">📧</div>
+                <p className="text-slate-300 text-sm">Onay e-postası<br/>gönderilmiştir</p>
+              </motion.div>
+
+              <motion.div
+                variants={itemVariants}
+                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 text-center"
+              >
+                <div className="text-3xl mb-2">🚚</div>
+                <p className="text-slate-300 text-sm">2-3 iş günü içinde<br/>teslimat</p>
+              </motion.div>
+
+              <motion.div
+                variants={itemVariants}
+                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 text-center"
+              >
+                <div className="text-3xl mb-2">📱</div>
+                <p className="text-slate-300 text-sm">SMS ile takip<br/>bilgisi gönderilecek</p>
+              </motion.div>
             </div>
+
+            {/* Next Steps */}
+            <motion.div
+              variants={itemVariants}
+              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-8 mb-8"
+            >
+              <h2 className="text-xl font-bold text-white mb-4">Sonraki Adımlar</h2>
+              <ol className="space-y-3 text-slate-300">
+                <li className="flex items-start gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-primary-900 font-bold text-sm flex-shrink-0">
+                    1
+                  </span>
+                  <span>E-posta kutunuzu kontrol edin. Siparişinizin detaylarını içeren onay e-postası alacaksınız.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-primary-900 font-bold text-sm flex-shrink-0">
+                    2
+                  </span>
+                  <span>Takip numaranızı not edin. Siparişinizi istediğiniz zaman kontrol edebilirsiniz.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-primary-900 font-bold text-sm flex-shrink-0">
+                    3
+                  </span>
+                  <span>Teslimat günü yaklaşınca SMS ve e-posta ile bilgilendirileceksiniz.</span>
+                </li>
+              </ol>
+            </motion.div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href={`/tracking/${orderData.orderId}`}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
-              >
-                🚚 Sipariş Takibi (Live)
-              </Link>
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col sm:flex-row gap-4"
+            >
               <Link
                 href="/products"
-                className="px-8 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold"
+                className="flex-1 px-8 py-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-lg transition-all text-center"
               >
                 🛍️ Alışverişe Devam Et
               </Link>
-              <button
-                onClick={() => {
-                  // Copy order ID to clipboard
-                  navigator.clipboard.writeText(orderData?.orderId);
-                  alert('Sipariş numarası kopyalandı!');
-                }}
-                className="px-8 py-3 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400 transition font-semibold"
-              >
-                📋 Siparişi Kopyala
-              </button>
-            </div>
-
-            {/* Help */}
-            <div className="mt-10 pt-10 border-t border-gray-200">
-              <p className="text-gray-600 text-sm mb-4">Sorularınız mı var?</p>
               <Link
-                href="/contact"
-                className="text-teal-600 hover:underline font-semibold"
+                href="/"
+                className="flex-1 px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold rounded-lg transition-all text-center backdrop-blur-lg"
               >
-                Bize Ulaşın →
+                🏠 Ana Sayfaya Dön
               </Link>
-            </div>
-          </div>
+            </motion.div>
+
+            {/* Contact Info */}
+            <motion.div
+              variants={itemVariants}
+              className="mt-12 pt-8 border-t border-white/10 text-center text-slate-400 text-sm"
+            >
+              <p>
+                Sorularınız mı var? <br />
+                <Link href="/contact" className="text-amber-400 hover:text-amber-300 font-semibold">
+                  İletişim sayfasından bize ulaşın
+                </Link>
+                {' '}veya <a href="tel:+905551234567" className="text-amber-400 hover:text-amber-300 font-semibold">+90 555 123 45 67</a> numarasını arayın.
+              </p>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
       <Footer />

@@ -121,12 +121,12 @@ export default function BlogPage() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 via-primary-50 to-cream-50">
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-slate-900 to-black" style={{ backgroundColor: '#022c22' }}>
         {/* Hero */}
         <div className="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-900 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-5xl font-bold text-white mb-4">Baklava Bilim & Sanat</h1>
-            <p className="text-xl text-gold-200 max-w-2xl">
+            <p className="text-xl text-amber-300 max-w-2xl">
               Baklavaların ardındaki tarih, kültür ve lezzet hakkında derinlemesine makaleler
             </p>
           </div>
@@ -140,7 +140,7 @@ export default function BlogPage() {
               placeholder="Blog yazılarında ara..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-6 py-4 border-2 border-primary-200 rounded-xl focus:outline-none focus:border-primary-500 text-lg mb-6"
+              className="w-full px-6 py-4 border-2 border-amber-500/20 rounded-xl focus:outline-none focus:border-amber-500/50 text-lg mb-6 bg-slate-800/50 text-slate-200 placeholder-slate-500"
             />
 
             <div className="flex flex-wrap gap-3">
@@ -150,8 +150,8 @@ export default function BlogPage() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-6 py-2 rounded-full font-semibold transition ${
                     selectedCategory === cat
-                      ? 'bg-primary-700 text-white shadow-lg'
-                      : 'bg-white border-2 border-primary-200 text-primary-900 hover:border-primary-400'
+                      ? 'bg-amber-600 text-white shadow-lg'
+                      : 'bg-slate-800/50 border-2 border-amber-500/20 text-slate-300 hover:border-amber-500/40'
                   }`}
                 >
                   {cat}
@@ -164,15 +164,15 @@ export default function BlogPage() {
           {featuredPosts.length > 0 && (
             <div className="mb-16">
               <div className="mb-12">
-                <h2 className="text-4xl font-bold text-primary-900 mb-3 font-serif tracking-tight">Öne Çıkan Yazılar</h2>
-                <div className="h-1 w-16 bg-gradient-to-r from-gold-400 to-gold-500"></div>
+                <h2 className="text-4xl font-bold text-amber-400 mb-3 font-serif tracking-tight">Öne Çıkan Yazılar</h2>
+                <div className="h-1 w-16 bg-gradient-to-r from-amber-400 to-amber-500"></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {featuredPosts.map((post) => (
                   <Link
                     key={post.id}
                     href={`/blog/${post.slug}`}
-                    className="group bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-gray-100"
+                    className="group bg-slate-800/50 rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-amber-500/20"
                   >
                     {/* Editorial Hero - Category Color Based */}
                     <div className={`h-56 flex items-center justify-center relative overflow-hidden ${
@@ -185,19 +185,19 @@ export default function BlogPage() {
                     }`}>
                       <div className="absolute inset-0 bg-black/20"></div>
                       <div className="relative z-10 text-center px-4">
-                        <div className="text-xs font-bold text-gold-200 uppercase tracking-widest mb-2">{post.category}</div>
+                        <div className="text-xs font-bold text-amber-200 uppercase tracking-widest mb-2">{post.category}</div>
                         <div className="text-sm font-bold text-white/80 leading-tight">{post.title}</div>
                       </div>
                     </div>
                     {/* Content */}
                     <div className="p-6">
                       <div className="mb-3">
-                        <span className="text-xs font-bold text-gold-600 uppercase">{post.category}</span>
-                        <span className="text-xs text-gray-400 ml-3">~{post.readTime}</span>
+                        <span className="text-xs font-bold text-amber-400 uppercase">{post.category}</span>
+                        <span className="text-xs text-slate-400 ml-3">~{post.readTime}</span>
                       </div>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{post.excerpt}</p>
-                      <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-3">
-                        <span className="font-medium text-gray-700">{post.author}</span>
+                      <p className="text-slate-300 text-sm mb-4 line-clamp-2">{post.excerpt}</p>
+                      <div className="flex justify-between items-center text-xs text-slate-400 border-t border-amber-500/10 pt-3">
+                        <span className="font-medium text-slate-300">{post.author}</span>
                         <span>{new Date(post.date).toLocaleDateString('tr-TR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                       </div>
                     </div>
@@ -211,17 +211,17 @@ export default function BlogPage() {
           {regularPosts.length > 0 && (
             <div>
               <div className="mb-12">
-                <h2 className="text-3xl font-bold text-primary-900 mb-3 font-serif">
+                <h2 className="text-3xl font-bold text-amber-400 mb-3 font-serif">
                   {featuredPosts.length > 0 ? 'Tüm Yazılar' : 'Blog Yazıları'}
                 </h2>
-                <div className="h-1 w-12 bg-gradient-to-r from-gold-400 to-gold-500"></div>
+                <div className="h-1 w-12 bg-gradient-to-r from-amber-400 to-amber-500"></div>
               </div>
               <div className="space-y-5">
                 {regularPosts.map((post) => (
                   <Link
                     key={post.id}
                     href={`/blog/${post.slug}`}
-                    className="block group bg-white rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 p-5 border border-gray-100 hover:border-gold-200"
+                    className="block group bg-slate-800/50 rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 p-5 border border-amber-500/20 hover:border-amber-500/40"
                   >
                     <div className="flex gap-6 items-start">
                       {/* Minimal color block */}
@@ -237,22 +237,22 @@ export default function BlogPage() {
                       </div>
                       <div className="flex-grow">
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-xs font-bold text-gold-600 uppercase">{post.category}</span>
-                          <span className="text-xs text-gray-400">{post.readTime}</span>
+                          <span className="text-xs font-bold text-amber-400 uppercase">{post.category}</span>
+                          <span className="text-xs text-slate-400">{post.readTime}</span>
                         </div>
-                        <h3 className="text-base font-bold text-primary-900 mb-2 group-hover:text-gold-600 transition">
+                        <h3 className="text-base font-bold text-amber-300 mb-2 group-hover:text-amber-200 transition">
                           {post.title}
                         </h3>
-                        <p className="text-gray-600 text-sm mb-3">{post.excerpt}</p>
+                        <p className="text-slate-300 text-sm mb-3">{post.excerpt}</p>
                         <div className="flex justify-between items-center">
                           <div className="flex gap-2 flex-wrap">
                             {post.tags.slice(0, 2).map((tag) => (
-                              <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded text-9">
+                              <span key={tag} className="text-xs bg-slate-700/50 text-slate-300 px-2 py-1 rounded border border-amber-500/10">
                                 {tag}
                               </span>
                             ))}
                           </div>
-                          <div className="text-xs text-gray-500 flex gap-3">
+                          <div className="text-xs text-slate-400 flex gap-3">
                             <span className="font-medium">{post.author}</span>
                             <span>{new Date(post.date).toLocaleDateString('tr-TR', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                           </div>
@@ -267,7 +267,7 @@ export default function BlogPage() {
 
           {filteredPosts.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-2xl text-primary-500">Hiç makale bulunamadı.</p>
+              <p className="text-2xl text-amber-400">Hiç makale bulunamadı.</p>
             </div>
           )}
         </div>

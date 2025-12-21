@@ -1,22 +1,30 @@
 'use client';
 
 import { useCart } from '@/lib/context/CartContext';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { toast } from 'sonner';
 import { 
   COUNTRIES, 
   getCitiesByCountry, 
   getDistrictsByCity 
 } from '@/lib/cities';
 
+// Simplest mock payment - no database needed for MVP
+const processMockPayment = async (delayMs: number = 2000): Promise<string> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Generate a simple order ID
+      const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      resolve(orderId);
+    }, delayMs);
+  });
+};
+
 export default function CheckoutPage() {
-  const { items, total } = useCart();
-  const { data: session, status } = useSession();
+  const { items, total, clearCart } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'shipping' | 'pickup'>('shipping');
@@ -26,9 +34,9 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState<'address' | 'payment'>('address');
   
   const [formData, setFormData] = useState({
-    fullName: session?.user?.name || '',
-    email: session?.user?.email || '',
-    phone: session?.user?.phone || '',
+    fullName: '',
+    email: '',
+    phone: '',
     addressTitle: 'Ev',
     address: '',
     city: 'Istanbul',
@@ -47,21 +55,13 @@ export default function CheckoutPage() {
   });
 
   const [cardData, setCardData] = useState({
-    cardName: session?.user?.name || '',
+    cardName: '',
     cardNumber: '',
     expiry: '',
     cvc: '',
   });
 
-  // Redirect to login if not authenticated
-  if (status === 'unauthenticated') {
-    router.push('/auth/login');
-    return null;
-  }
-
-  if (status === 'loading') {
-    return <div>Yükleniyor...</div>;
-  }
+  // Redirect if cart is empty
 
   if (items.length === 0) {
     return (
@@ -140,72 +140,57 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      // Create order with Stripe payment intent
-      const orderRes = await fetch('/api/checkout/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items,
-          customer: {
-            name: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-          },
-          address: {
-            fullAddress: formData.address,
-            city: formData.city,
-            district: formData.district,
-            neighborhood: formData.neighborhood,
-            postalCode: formData.postalCode,
-            buildingNumber: formData.buildingNumber,
-            doorNumber: formData.doorNumber,
-          },
-          invoice: {
-            type: formData.invoiceType,
-            taxNumber: formData.taxNumber,
-            companyName: formData.companyName,
-          },
-          delivery: {
-            type: formData.deliveryType,
-            notes: formData.notes,
-          },
-          totalPrice: finalTotal,
-          cardName: cardData.cardName,
-          cardLastFour: cardData.cardNumber.slice(-4),
-        }),
-      });
-
-      const orderData = await orderRes.json();
-
-      if (!orderRes.ok) {
-        throw new Error(orderData.error || 'Ödeme başlatılamadı');
+      // Validate card data
+      if (!isCardValid()) {
+        throw new Error('Lütfen kart bilgilerinizi kontrol edin');
       }
 
-      // Process payment with Stripe
-      const paymentRes = await fetch('/api/checkout/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: orderData.orderId,
-          amount: finalTotal,
-          cardNumber: cardData.cardNumber.replace(/\s/g, ''),
-          expiry: cardData.expiry,
-          cvc: cardData.cvc,
-          cardName: cardData.cardName,
-        }),
-      });
+      // Log the order data that would be sent to backend
+      const orderPayload = {
+        items,
+        customer: {
+          name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+        },
+        address: {
+          fullAddress: formData.address,
+          city: formData.city,
+          district: formData.district,
+          neighborhood: formData.neighborhood,
+          postalCode: formData.postalCode,
+          buildingNumber: formData.buildingNumber,
+          doorNumber: formData.doorNumber,
+        },
+        invoice: {
+          type: formData.invoiceType,
+          taxNumber: formData.taxNumber,
+          companyName: formData.companyName,
+        },
+        delivery: {
+          type: formData.deliveryType,
+          notes: formData.notes,
+        },
+        totalPrice: finalTotal,
+        cardName: cardData.cardName,
+        cardLastFour: cardData.cardNumber.slice(-4),
+      };
 
-      const paymentData = await paymentRes.json();
+      console.log('📦 Order created:', orderPayload);
 
-      if (!paymentRes.ok) {
-        throw new Error(paymentData.error || 'Ödeme başarısız');
-      }
-
-      toast.success('✅ Ödeme başarıyla tamamlandı!');
-      router.push(`/checkout/success/${orderData.orderId}`);
+      // Mock payment processing (2 second delay)
+      const orderId = await processMockPayment(2000);
+      
+      // Clear the cart after successful payment
+      clearCart();
+      
+      alert('✅ Ödeme başarıyla tamamlandı!');
+      
+      // Redirect to success page
+      router.push(`/checkout/success/${orderId}`);
     } catch (error) {
       console.error('Payment error:', error);
-      toast.error(error instanceof Error ? error.message : 'Ödeme sırasında hata oluştu');
+      alert(error instanceof Error ? error.message : 'Ödeme sırasında hata oluştu');
     } finally {
       setLoading(false);
     }

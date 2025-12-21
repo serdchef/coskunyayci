@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" className={`${inter.variable} ${lexend.variable}`}>
-      <body className="min-h-screen bg-gray-50 font-sans antialiased">
+      <body className="min-h-screen bg-gradient-to-br from-teal-50 via-cream-50 to-gold-50 font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

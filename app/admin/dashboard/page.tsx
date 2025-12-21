@@ -67,8 +67,8 @@ const STATUS_CONFIG = {
   CONFIRMED: { label: 'Onaylandı', color: 'blue', icon: '✅' },
   BAKING: { label: 'Fırınlanıyor', color: 'orange', icon: '🔥' },
   READY: { label: 'Hazır', color: 'amber', icon: '✨' },
-  IN_TRANSIT: { label: 'Yolda', color: 'purple', icon: '🚚' },
-  OUT_FOR_DELIVERY: { label: 'Teslimat Aşaması', color: 'indigo', icon: '📍' },
+  IN_TRANSIT: { label: 'Yolda', color: 'emerald', icon: '🚚' },
+  OUT_FOR_DELIVERY: { label: 'Teslimat Aşaması', color: 'teal', icon: '📍' },
   DELIVERED: { label: 'Teslim Edildi', color: 'green', icon: '🎉' },
 };
 

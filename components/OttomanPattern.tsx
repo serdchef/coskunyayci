@@ -3,20 +3,11 @@
  * Gerçek kutu tasarımlarından ilham alınmıştır
  */
 
-// Logo Görselini Direkt Kullan
+// Logo Görselini Direkt Kullan - Artık kullanılmıyor, body::before ile replace edildi
+// Tüm sayfada tek parça logo pattern için globals.css body::before kullanılıyor
 export function OttomanFloral() {
-  return (
-    <div 
-      className="absolute inset-0 w-full h-full"
-      style={{
-        backgroundImage: 'url(/logo.png)',
-        backgroundSize: '100px 100px',
-        backgroundRepeat: 'repeat',
-        backgroundPosition: 'center',
-        opacity: 0.15
-      }}
-    />
-  );
+  // Artık boş döndürüyoruz - global CSS'teki body::before kullanılıyor
+  return null;
 }
 
 // Zengin süsleme bordürü (kutu kenarlarındaki pattern)

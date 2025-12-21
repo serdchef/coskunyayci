@@ -12,12 +12,12 @@ interface BoxItem {
 }
 
 const AVAILABLE_PRODUCTS: BoxItem[] = [
-  { id: '1', name: 'Antep Fıstıklı', emoji: '🥜', size: 1 },
-  { id: '2', name: 'Ceviz', emoji: '🌰', size: 1 },
-  { id: '3', name: 'Çikolatalı', emoji: '🍫', size: 1 },
-  { id: '4', name: 'Şerbetli', emoji: '🍯', size: 2 },
-  { id: '5', name: 'Pistacio Mix', emoji: '💚', size: 2 },
-  { id: '6', name: 'Deluxe Assorti', emoji: '👑', size: 3 },
+  { id: '1', name: 'Antep Fıstıklı', emoji: '■', size: 1 },
+  { id: '2', name: 'Ceviz', emoji: '■', size: 1 },
+  { id: '3', name: 'Çikolatalı', emoji: '■', size: 1 },
+  { id: '4', name: 'Şerbetli', emoji: '■', size: 2 },
+  { id: '5', name: 'Pistacio Mix', emoji: '■', size: 2 },
+  { id: '6', name: 'Deluxe Assorti', emoji: '■', size: 3 },
 ];
 
 const BOX_CAPACITY = 10; // Maximum size units

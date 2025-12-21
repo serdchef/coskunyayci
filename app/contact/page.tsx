@@ -59,60 +59,60 @@ export default function ContactPage() {
       
       <main className="relative z-10">
         {/* Hero - Premium */}
-        <section className="relative text-white py-24">
+        <section className="relative text-white py-16 sm:py-20 md:py-24">
           
           <div className="container mx-auto px-4 text-center relative z-10">
-            <OttomanBorder className="w-full max-w-xl h-8 text-gold-400 mb-6 mx-auto" />
-            <h1 className="font-display text-5xl md:text-6xl font-bold mb-4 tracking-wide">
+            <OttomanBorder className="w-full max-w-xl h-8 text-gold-400 mb-4 sm:mb-6 mx-auto" />
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold mb-4 tracking-wide">
               İLETİŞİM
             </h1>
-            <div className="text-gold-400 text-lg mb-6 tracking-[0.3em]">S I Z E  N A S I L  Y A R D I M C I  O L A B İ L İ R İ Z ?</div>
-            <p className="text-xl opacity-90 max-w-2xl mx-auto font-light">
+            <div className="text-gold-400 text-sm sm:text-lg mb-4 sm:mb-6 tracking-[0.3em] truncate px-2">S I Z E  N A S I L  Y A R D I M C I  O L A B İ L İ R İ Z ?</div>
+            <p className="text-base sm:text-lg md:text-xl opacity-90 max-w-2xl mx-auto font-light px-2">
               Sorularınız, önerileriniz veya özel siparişleriniz için<br/>
               bize ulaşmaktan çekinmeyin
             </p>
-            <OttomanBorder className="w-full max-w-xl h-8 text-gold-400 mt-6 mx-auto" />
+            <OttomanBorder className="w-full max-w-xl h-8 text-gold-400 mt-4 sm:mt-6 mx-auto" />
           </div>
         </section>
 
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid lg:grid-cols-3 gap-8">
+        <div className="container mx-auto px-4 py-8 sm:py-12">
+          <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Contact Info */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="lg:col-span-1 space-y-4 sm:space-y-6">
               {/* Phone */}
-              <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <svg className="w-5 sm:w-6 h-5 sm:h-6 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                 </div>
-                <h3 className="font-bold text-primary-900 mb-2">Telefon</h3>
-                <p className="text-gray-600 mb-1">+90 532 123 45 67</p>
-                <p className="text-sm text-gray-500">Pazartesi - Cumartesi: 09:00 - 20:00</p>
+                <h3 className="font-bold text-primary-900 mb-2 text-sm sm:text-base">Telefon</h3>
+                <p className="text-gray-600 mb-1 text-sm sm:text-base">+90 532 123 45 67</p>
+                <p className="text-xs sm:text-sm text-gray-500">Pazartesi - Cumartesi: 09:00 - 20:00</p>
               </div>
 
               {/* Email */}
-              <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                <div className="w-12 h-12 bg-gold-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-gold-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gold-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <svg className="w-5 sm:w-6 h-5 sm:h-6 text-gold-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="font-bold text-primary-900 mb-2">E-posta</h3>
-                <p className="text-gray-600 mb-1">info@coskunyaycibaklava.com</p>
-                <p className="text-sm text-gray-500">24 saat içinde yanıt veriyoruz</p>
+                <h3 className="font-bold text-primary-900 mb-2 text-sm sm:text-base">E-posta</h3>
+                <p className="text-gray-600 mb-1 text-sm sm:text-base">info@coskunyaycibaklava.com</p>
+                <p className="text-xs sm:text-sm text-gray-500">24 saat içinde yanıt veriyoruz</p>
               </div>
 
               {/* Address */}
-              <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <svg className="w-5 sm:w-6 h-5 sm:h-6 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h3 className="font-bold text-primary-900 mb-2">Adres</h3>
-                <p className="text-gray-600">
+                <h3 className="font-bold text-primary-900 mb-2 text-sm sm:text-base">Adres</h3>
+                <p className="text-gray-600 text-sm sm:text-base">
                   Çarşı Mahallesi, Baklava Sokak No:42<br />
                   Gaziantep, Türkiye
                 </p>
@@ -143,15 +143,15 @@ export default function ContactPage() {
 
             {/* Contact Form */}
             <div className="lg:col-span-2">
-              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-                <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-900 mb-6">
+              <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100">
+                <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-primary-900 mb-4 sm:mb-6">
                   Mesaj Gönderin
                 </h2>
                 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                         Ad Soyad *
                       </label>
                       <input
@@ -160,13 +160,13 @@ export default function ContactPage() {
                         required
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
                         placeholder="Adınız ve soyadınız"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                         E-posta *
                       </label>
                       <input
@@ -175,15 +175,15 @@ export default function ContactPage() {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
                         placeholder="ornek@email.com"
                       />
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                         Telefon
                       </label>
                       <input
@@ -191,13 +191,13 @@ export default function ContactPage() {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
                         placeholder="+90 5XX XXX XX XX"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                         Konu *
                       </label>
                       <select
@@ -205,7 +205,7 @@ export default function ContactPage() {
                         required
                         value={formData.subject}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
                       >
                         <option value="">Konu seçin</option>
                         <option value="order">Sipariş</option>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                       Mesajınız *
                     </label>
                     <textarea
@@ -226,8 +226,8 @@ export default function ContactPage() {
                       required
                       value={formData.message}
                       onChange={handleChange}
-                      rows={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none"
+                      rows={5}
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none text-sm"
                       placeholder="Mesajınızı buraya yazın..."
                     />
                   </div>
@@ -235,7 +235,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-primary-700 to-primary-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full md:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-primary-700 to-primary-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center gap-2">

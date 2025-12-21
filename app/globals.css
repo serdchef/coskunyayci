@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   :root {
     --font-serif: 'Playfair Display', Georgia, serif;
@@ -10,9 +14,51 @@
     border-color: rgb(229, 231, 235);
   }
 
+  html {
+    background: #0f766e !important;
+  }
+
   body {
     color: rgb(17, 24, 39);
     font-family: 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f766e 0%, #0d5a52 50%, #0f766e 100%) !important;
+    background-attachment: fixed !important;
+    position: relative;
+    min-height: 100vh;
+    /* Sıcak altın aydınlığı ekle */
+    filter: brightness(1.02) saturate(1.05);
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/logo.png');
+    background-size: 100px 100px;
+    background-attachment: scroll;
+    background-repeat: repeat;
+    background-color: transparent;
+    /* Ghost Gold: Görünür ama hafif - 10% opacity */
+    opacity: 0.10;
+    pointer-events: none;
+    z-index: 0;
+    /* Altın renk tonunu daha açık ve belirgin yap */
+    filter: saturate(1.5) hue-rotate(5deg) brightness(1.1);
+  }
+
+  main {
+    background: transparent !important;
+  }
+
+  main > section {
+    background: transparent !important;
+  }
+
+  html {
+    position: relative;
   }
 
   h1, h2, h3 {
@@ -103,6 +149,52 @@
       opacity: 1;
     }
   }
+}
+
+/* About Page Pattern Background */
+.about-page-wrapper {
+  background: linear-gradient(135deg, #0f766e 0%, #0d5a52 50%, #0f766e 100%);
+  background-attachment: fixed;
+  background-size: cover;
+  position: relative;
+}
+
+.about-page-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/logo.png');
+  background-size: 100px 100px;
+  background-attachment: scroll;
+  background-repeat: repeat;
+  opacity: 0.10;
+  pointer-events: none;
+  z-index: 0;
+  filter: saturate(1.5) hue-rotate(5deg) brightness(1.1);
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
 }
 
 @tailwind base;

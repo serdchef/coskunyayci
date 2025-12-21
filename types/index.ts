@@ -26,14 +26,19 @@ export interface Product {
   sku: string;
   name: string;
   description?: string;
-  priceCents: number;
-  weightGr: number;
+  priceCents?: number;
+  weightGr?: number;
+  basePrice?: number | string;
+  image?: string;
   imageUrl?: string;
-  isFeatured: boolean;
-  isActive: boolean;
-  sortOrder: number;
-  createdAt: Date;
-  updatedAt: Date;
+  isFeatured?: boolean;
+  isActive?: boolean;
+  sortOrder?: number;
+  category?: string;
+  region?: string;
+  productType?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Order {
