@@ -1,15 +1,59 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
+
+interface OrderItem {
+  id: string;
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  status: string;
+  totalPrice: number;
+  address?: string;
+  city?: string;
+  district?: string;
+  zipCode?: string;
+  items: OrderItem[];
+  createdAt: string;
+}
 
 export default function CheckoutSuccessPage({
   params,
 }: {
   params: { orderId: string };
 }) {
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchOrder() {
+      try {
+        const response = await fetch(`/api/orders/${params.orderId}`);
+        if (!response.ok) {
+          throw new Error('Sipariş bulunamadı');
+        }
+        const data = await response.json();
+        setOrder(data.order || data);
+      } catch (err) {
+        console.error('Failed to fetch order:', err);
+        setError(err instanceof Error ? err.message : 'Sipariş yüklenemedi');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchOrder();
+  }, [params.orderId]);
+
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -78,6 +122,52 @@ export default function CheckoutSuccessPage({
                 </p>
               </div>
             </motion.div>
+
+            {/* Order Details */}
+            {loading && (
+              <motion.div variants={itemVariants} className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 mb-8 text-center">
+                <p className="text-slate-300">Sipariş detayları yükleniyor...</p>
+              </motion.div>
+            )}
+
+            {error && (
+              <motion.div variants={itemVariants} className="bg-red-500/20 backdrop-blur-lg border border-red-500/40 rounded-xl p-6 mb-8 text-center">
+                <p className="text-red-200">{error}</p>
+              </motion.div>
+            )}
+
+            {order && !loading && (
+              <>
+                <motion.div variants={itemVariants} className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 mb-8">
+                  <h2 className="text-xl font-bold text-white mb-4">Sipariş Özeti</h2>
+                  <div className="space-y-3">
+                    {order.items.map((item, index) => (
+                      <div key={index} className="flex justify-between text-slate-300">
+                        <span>{item.quantity}x {item.productName}</span>
+                        <span className="font-semibold">{(item.price * item.quantity).toFixed(2)} TL</span>
+                      </div>
+                    ))}
+                    <div className="border-t border-white/20 pt-3 mt-3">
+                      <div className="flex justify-between text-amber-400 font-bold text-lg">
+                        <span>Toplam</span>
+                        <span>{order.totalPrice.toFixed(2)} TL</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {order.address && (
+                  <motion.div variants={itemVariants} className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 mb-8">
+                    <h2 className="text-xl font-bold text-white mb-4">Teslimat Adresi</h2>
+                    <p className="text-slate-300">
+                      {order.address}<br />
+                      {order.district && `${order.district}, `}{order.city}<br />
+                      {order.zipCode}
+                    </p>
+                  </motion.div>
+                )}
+              </>
+            )}
 
             {/* Info Cards */}
             <div className="grid md:grid-cols-3 gap-4 mb-8">
