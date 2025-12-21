@@ -12,17 +12,6 @@ import {
   getDistrictsByCity 
 } from '@/lib/cities';
 
-// Simplest mock payment - no database needed for MVP
-const processMockPayment = async (delayMs: number = 2000): Promise<string> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Generate a simple order ID
-      const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      resolve(orderId);
-    }, delayMs);
-  });
-};
-
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const router = useRouter();
@@ -145,52 +134,64 @@ export default function CheckoutPage() {
         throw new Error('Lütfen kart bilgilerinizi kontrol edin');
       }
 
-      // Log the order data that would be sent to backend
+      // Prepare order data for API
       const orderPayload = {
-        items,
         customer: {
           name: formData.fullName,
           email: formData.email,
           phone: formData.phone,
         },
+        items: items.map(item => ({
+          name: item.name,
+          productName: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
         address: {
-          fullAddress: formData.address,
+          street: formData.address,
           city: formData.city,
           district: formData.district,
-          neighborhood: formData.neighborhood,
-          postalCode: formData.postalCode,
-          buildingNumber: formData.buildingNumber,
-          doorNumber: formData.doorNumber,
+          zipCode: formData.postalCode,
         },
+        totalPrice: finalTotal,
+        deliveryType: formData.deliveryType,
         invoice: {
           type: formData.invoiceType,
           taxNumber: formData.taxNumber,
           companyName: formData.companyName,
         },
-        delivery: {
-          type: formData.deliveryType,
-          notes: formData.notes,
-        },
-        totalPrice: finalTotal,
-        cardName: cardData.cardName,
-        cardLastFour: cardData.cardNumber.slice(-4),
+        notes: formData.notes,
       };
 
-      console.log('📦 Order created:', orderPayload);
+      console.log('📦 Creating order:', orderPayload);
 
-      // Mock payment processing (2 second delay)
-      const orderId = await processMockPayment(2000);
+      // Call the real API
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderPayload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Sipariş oluşturulamadı');
+      }
+
+      const result = await response.json();
+      const orderId = result.orderId;
       
       // Clear the cart after successful payment
       clearCart();
       
-      alert('✅ Ödeme başarıyla tamamlandı!');
+      alert('✅ Sipariş başarıyla oluşturuldu!');
       
-      // Redirect to success page
+      // Redirect to success page with real order ID
       router.push(`/checkout/success/${orderId}`);
     } catch (error) {
-      console.error('Payment error:', error);
-      alert(error instanceof Error ? error.message : 'Ödeme sırasında hata oluştu');
+      console.error('Order creation error:', error);
+      alert(error instanceof Error ? error.message : 'Sipariş oluşturulurken hata oluştu');
     } finally {
       setLoading(false);
     }

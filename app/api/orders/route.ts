@@ -1,402 +1,162 @@
 /**
  * POST /api/orders
- * Yeni sipariş oluşturma endpoint'i
- * 
- * Acceptance Criteria:
- * ✅ Valid body ile 201 dönmeli
- * ✅ Order DB'de oluşmalı
- * ✅ Twilio notification gönderilmeli
- * ✅ Payment link döndürülmeli (paymentMethod=link ise)
- * ✅ Hatalı telefon formatında 400 dönmeli
- * ✅ Rate limit aşılırsa 429 dönmeli
+ * Create new order with database persistence and email notifications
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { nanoid } from 'nanoid';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { 
-  createOrderSchema, 
-  validateInput, 
-  checkRateLimit, 
-  getClientIp,
-  getUserAgent,
-  getRateLimitHeaders 
-} from '@/lib/security';
-import { formatBusinessNotification } from '@/lib/twilio';
-import { createStripeCheckoutSession } from '@/lib/payments';
-// Logger is dynamically imported at runtime to avoid pulling pino/thread-stream
-// into the Next server bundle during module initialization.
-import { OrderStatus, PaymentMethod, PaymentStatus, DeliveryType } from '@/types';
+import { sendOrderConfirmation } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
-    const clientIp = getClientIp(request);
-    const rateLimitResult = await checkRateLimit(`order:${clientIp}`, {
-      windowMs: 300000, // 5 dakika
-      maxRequests: 10,
-    });
-
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { error: 'Çok fazla istek. Lütfen biraz bekleyip tekrar deneyin.' },
-        { 
-          status: 429,
-          headers: getRateLimitHeaders(rateLimitResult)
-        }
-      );
-    }
-
-    // Request body'yi parse et
+    const session = await getServerSession(authOptions);
     const body = await request.json();
 
-    // Input validation
-    const validation = validateInput(createOrderSchema, body);
-    if (!validation.success) {
-      const errors = validation.errors?.errors.map((e) => ({
-        field: e.path.join('.'),
-        message: e.message,
-      }));
-
+    // Validate required fields
+    if (!body.customer || !body.items || body.items.length === 0) {
       return NextResponse.json(
-        { error: 'Geçersiz veri', details: errors },
+        { error: 'Customer info and items are required' },
         { status: 400 }
       );
     }
 
-    const data = validation.data!;
+    const { customer, items, address, totalPrice } = body;
 
-    // Delivery type kontrolü
-    if (data.deliveryType === 'delivery' && !data.address) {
-      return NextResponse.json(
-        { error: 'Adrese teslimat için adres bilgisi gerekli' },
-        { status: 400 }
-      );
-    }
+    // Calculate total from items
+    const calculatedTotal = items.reduce(
+      (sum: number, item: any) => sum + item.price * item.quantity,
+      0
+    );
 
-    // Ürünleri validate et ve fiyatları hesapla
-    const productSkus = data.items.map((item) => item.sku);
-    const products = await prisma.product.findMany({
-      where: { 
-        sku: { in: productSkus },
-        isActive: true 
-      },
-    });
-
-    if (products.length !== data.items.length) {
-      return NextResponse.json(
-        { error: 'Bazı ürünler bulunamadı veya aktif değil' },
-        { status: 400 }
-      );
-    }
-
-    // Stok kontrolü
-    for (const item of data.items) {
-      const product = products.find((p: any) => p.sku === item.sku);
-      if (product && product.stockQty < item.qty) {
-        return NextResponse.json(
-          { error: `${product.name} için yeterli stok yok` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Fiyat hesaplama
-    let subtotalCents = 0;
-    const orderItems = data.items.map((item) => {
-      const product = products.find((p: any) => p.sku === item.sku)!;
-      const itemTotal = product.priceCents * item.qty;
-      subtotalCents += itemTotal;
-
-      return {
-        sku: product.sku,
-        name: product.name,
-        qty: item.qty,
-        priceCents: product.priceCents,
-        options: {},
-      };
-    });
-
-    // Kupon kontrolü ve indirim hesaplama
-    let discountCents = 0;
-    let couponCode: string | undefined;
-
-    if (data.couponCode) {
-      const coupon = await prisma.coupon.findUnique({
-        where: { code: data.couponCode.toUpperCase() },
+    // Find or create user (if email provided)
+    let userId = session?.user?.id;
+    if (!userId && customer.email) {
+      // Check if user exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email: customer.email },
       });
 
-      if (coupon && coupon.isActive) {
-        const now = new Date();
-        const isValid =
-          (!coupon.validFrom || coupon.validFrom <= now) &&
-          (!coupon.validTo || coupon.validTo >= now) &&
-          (!coupon.usageLimit || coupon.usageCount < coupon.usageLimit) &&
-          (!coupon.minOrderAmount || subtotalCents >= coupon.minOrderAmount);
-
-        if (isValid) {
-          if (coupon.type === 'PERCENTAGE' && coupon.discountPercent) {
-            discountCents = Math.floor((subtotalCents * coupon.discountPercent) / 100);
-          } else if (coupon.type === 'FIXED_AMOUNT' && coupon.discountAmount) {
-            discountCents = coupon.discountAmount;
-          }
-
-          // Maksimum indirim kontrolü
-          if (coupon.maxDiscountAmount && discountCents > coupon.maxDiscountAmount) {
-            discountCents = coupon.maxDiscountAmount;
-          }
-
-          couponCode = coupon.code;
-        }
+      if (existingUser) {
+        userId = existingUser.id;
       }
     }
 
-    // Teslimat ücreti
-    const deliveryFeeCents = data.deliveryType === 'delivery' 
-      ? (subtotalCents >= 50000 ? 0 : 0) // 500 TL üzeri ücretsiz
-      : 0;
-
-    // Vergi hesaplama
-    const taxCents = Math.floor((subtotalCents - discountCents + deliveryFeeCents) * 0.18);
-
-    // Toplam tutar
-    const totalCents = subtotalCents - discountCents + deliveryFeeCents + taxCents;
-
-    // Sipariş numarası oluştur
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const randomPart = nanoid(4).toUpperCase();
-    const orderNumber = `BK-${dateStr}-${randomPart}`;
-
-    // Sipariş oluştur
+    // Create order
     const order = await prisma.order.create({
       data: {
-        orderNumber,
-        customerName: data.customer.name,
-        customerPhone: data.customer.phone,
-        customerEmail: data.customer.email,
-        items: orderItems,
-        subtotalCents,
-        taxCents,
-        discountCents,
-        deliveryFeeCents,
-        totalCents,
-        status: OrderStatus.PENDING,
-        deliveryType: data.deliveryType as DeliveryType,
-        address: data.address,
-        paymentMethod: data.paymentMethod === 'cash' 
-          ? PaymentMethod.CASH 
-          : PaymentMethod.STRIPE,
-        paymentStatus: PaymentStatus.PENDING,
-        couponCode,
-        source: 'chatbot',
-        ipAddress: clientIp,
-        userAgent: getUserAgent(request),
-        notes: data.notes,
-      },
-    });
-
-    // Kupon kullanım sayısını artır
-    if (couponCode) {
-      await prisma.coupon.update({
-        where: { code: couponCode },
-        data: { usageCount: { increment: 1 } },
-      });
-    }
-
-    // Stok güncelle
-    for (const item of orderItems) {
-      await prisma.product.update({
-        where: { sku: item.sku },
-        data: { stockQty: { decrement: item.qty } },
-      });
-    }
-
-  // Lazy-load logger helpers to avoid importing heavy logging libraries when
-  // the module is evaluated by Next during bundling.
-  const { logOrder } = await import('@/lib/logger');
-  logOrder(order.id, 'created', { orderNumber, totalCents });
-
-    // Create a persistent Notification record and enqueue it for background sending
-    const itemsText = orderItems.map((item) => `${item.qty}x ${item.name}`).join('\n');
-    const messageBody = formatBusinessNotification({
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      customerName: order.customerName,
-      items: itemsText,
-      totalAmount: `${(totalCents / 100).toFixed(2)} TL`,
-      deliveryType: data.deliveryType === 'delivery' ? 'Adrese Teslimat' : 'Mağazadan Teslim',
-      address: data.address ? `${data.address.street}, ${data.address.district}, ${data.address.city}` : undefined,
-      phone: order.customerPhone,
-    });
-
-    try {
-      const notif = await prisma.notification.create({
-        data: {
-          orderId: order.id,
-          type: 'whatsapp',
-          to: process.env.BUSINESS_PHONE_NUMBER || '',
-          body: messageBody,
-          status: 'PENDING',
-        },
-      });
-
-      // Enqueue background job
-      const { enqueueNotification } = await import('@/lib/notifications');
-      await enqueueNotification({
-        notificationId: notif.id,
-        orderId: order.id,
-        type: 'whatsapp',
-        to: process.env.BUSINESS_PHONE_NUMBER || '',
-        body: messageBody,
-      });
-    } catch (err) {
-      const { default: logger } = await import('@/lib/logger');
-      logger.error({ err, orderId: order.id }, 'Failed to persist/enqueue business notification');
-    }
-
-    // Audit log
-    await prisma.auditLog.create({
-      data: {
-        entity: 'Order',
-        entityId: order.id,
-        action: 'CREATE',
-        payload: { orderNumber, totalCents },
-        actorType: 'customer',
-        ipAddress: clientIp,
-        userAgent: getUserAgent(request),
-      },
-    });
-
-    // Analytics event
-    await prisma.analyticsEvent.create({
-      data: {
-        eventName: 'order_placed',
-        properties: {
-          orderNumber,
-          totalCents,
-          itemCount: orderItems.length,
-          paymentMethod: data.paymentMethod,
-        },
-        sessionId: request.headers.get('x-session-id') || undefined,
-      },
-    });
-
-    // Ödeme linki oluştur (paymentMethod=link ise)
-    let paymentLink: string | undefined;
-    if (data.paymentMethod === 'link') {
-      try {
-        const checkoutSession = await createStripeCheckoutSession({
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          items: orderItems.map((item) => ({
-            name: item.name,
-            quantity: item.qty,
-            priceCents: item.priceCents,
+        userId: userId || null,
+        status: 'CONFIRMED',
+        totalPrice: totalPrice || calculatedTotal,
+        address: address?.street || null,
+        city: address?.city || null,
+        district: address?.district || null,
+        zipCode: address?.zipCode || null,
+        items: {
+          create: items.map((item: any) => ({
+            productName: item.name || item.productName,
+            quantity: item.quantity,
+            price: item.price,
           })),
-          totalCents,
-          customerEmail: data.customer.email,
-          successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/order/success?orderId=${order.id}`,
-          cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/order/cancel?orderId=${order.id}`,
-        });
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
 
-        paymentLink = checkoutSession.url;
-
-        // Payment intent ID'yi kaydet
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { paymentIntentId: checkoutSession.sessionId },
-        });
-      } catch (error) {
-    const { default: logger } = await import('@/lib/logger');
-    logger.error({ error, orderId: order.id }, 'Failed to create payment link');
-        // Ödeme linki oluşturulamazsa kapıda ödeme'ye geri dön
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { paymentMethod: PaymentMethod.CASH },
-        });
-      }
+    // Send confirmation emails
+    try {
+      await sendOrderConfirmation({
+        orderId: order.id,
+        customerName: customer.name,
+        customerEmail: customer.email,
+        items: order.items.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        totalPrice: order.totalPrice,
+        address: address
+          ? {
+              street: address.street,
+              city: address.city,
+              district: address.district,
+              zipCode: address.zipCode,
+            }
+          : undefined,
+        status: order.status,
+      });
+    } catch (emailError) {
+      console.error('Email send failed:', emailError);
+      // Continue - order is created even if email fails
     }
 
-    // Response
     return NextResponse.json(
       {
         success: true,
         orderId: order.id,
-        orderNumber: order.orderNumber,
-        totalCents,
-        paymentLink,
-        message: 'Siparişiniz başarıyla oluşturuldu',
+        message: 'Order created successfully',
       },
-      { 
-        status: 201,
-        headers: getRateLimitHeaders(rateLimitResult)
-      }
+      { status: 201 }
     );
-
   } catch (error: any) {
-  const { default: logger } = await import('@/lib/logger');
-  logger.error({ error }, 'Order creation error');
-
+    console.error('Order creation error:', error);
     return NextResponse.json(
-      { error: 'Sipariş oluşturulurken bir hata oluştu' },
+      { error: 'Failed to create order', details: error.message },
       { status: 500 }
     );
   }
 }
 
-// GET /api/orders - Sipariş listesi (Admin için)
+/**
+ * GET /api/orders/[id]
+ * Get order details by ID
+ */
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Auth kontrolü ekle (NextAuth session)
-    
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const status = searchParams.get('status');
-    
-    const skip = (page - 1) * limit;
+    const session = await getServerSession(authOptions);
+    const url = new URL(request.url);
+    const orderId = url.searchParams.get('id');
 
-    const where: any = {};
-    if (status) {
-      where.status = status;
+    if (!orderId) {
+      return NextResponse.json({ error: 'Order ID required' }, { status: 400 });
     }
 
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-            },
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
           },
         },
-      }),
-      prisma.order.count({ where }),
-    ]);
-
-    return NextResponse.json({
-      orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
       },
     });
 
-  } catch (error) {
-    const { default: logger } = await import('@/lib/logger');
-    logger.error({ error }, 'Get orders error');
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // Check authorization - user can only see their own orders unless admin
+    if (
+      order.userId &&
+      session?.user?.id !== order.userId &&
+      session?.user?.role !== 'ADMIN' &&
+      session?.user?.role !== 'SUPER_ADMIN'
+    ) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    return NextResponse.json(order);
+  } catch (error: any) {
+    console.error('Get order error:', error);
     return NextResponse.json(
-      { error: 'Siparişler alınırken hata oluştu' },
+      { error: 'Failed to fetch order' },
       { status: 500 }
     );
   }
