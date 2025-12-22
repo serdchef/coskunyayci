@@ -14,13 +14,13 @@ async function main() {
 
   // SUPER_ADMIN USER
   const superAdmin = await db.user.upsert({
-    where: { email: 'serdchef@gmail.com' },
+    where: { email: 'serdraal@gmail.com' },
     update: {
       role: 'SUPER_ADMIN',
       name: '👑 Sarayın Muhafızı (Admin)',
     },
     create: {
-      email: 'serdchef@gmail.com',
+      email: 'serdraal@gmail.com',
       name: '👑 Sarayın Muhafızı (Admin)',
       password: superAdminPassword,
       role: 'SUPER_ADMIN',
@@ -81,7 +81,11 @@ async function main() {
   let variantCount = 0;
 
   for (const productData of products) {
-    const product = await db.product.create({ data: productData });
+    const product = await db.product.upsert({
+      where: { sku: productData.sku },
+      update: {},
+      create: productData,
+    });
     productCount++;
 
     const variants = [
@@ -96,8 +100,15 @@ async function main() {
         (productData.basePrice * variantSpec.multiplier).toFixed(2)
       );
 
-      await db.productVariant.create({
-        data: {
+      await db.productVariant.upsert({
+        where: {
+          productId_size: {
+            productId: product.id,
+            size: variantSpec.size,
+          },
+        },
+        update: { price: variantPrice },
+        create: {
           productId: product.id,
           size: variantSpec.size,
           price: variantPrice,
@@ -113,12 +124,12 @@ async function main() {
 
   console.log('🎉 Seed Complete!\n');
   console.log('📊 Database Summary:');
-  console.log(`   ✅ SUPER_ADMIN: 1 (serdchef@gmail.com)`);
+  console.log(`   ✅ SUPER_ADMIN: 1 (serdraal@gmail.com)`);
   console.log(`   ✅ Test User: 1 (test@example.com)`);
   console.log(`   ✅ Products: ${productCount}`);
   console.log(`   ✅ Variants: ${variantCount}`);
   console.log('\n🔐 Credentials:');
-  console.log('   Admin: serdchef@gmail.com / TempPassword123!');
+  console.log('   Admin: serdraal@gmail.com / TempPassword123!');
   console.log('   Test: test@example.com / test123');
 }
 
