@@ -7,9 +7,20 @@ import OpenAI from 'openai';
 // Avoid importing logger at module init to prevent pulling pino/thread-stream
 // into server bundles. Logger will be lazy-loaded where needed.
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization to avoid build-time errors
+let openai: OpenAI | null = null;
+
+const getOpenAI = (): OpenAI | null => {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+};
 
 // ============================================================================
 // CHATBOT - Sipariş Slot Filling
@@ -55,6 +66,16 @@ export async function processChatbotMessage(
   currentSlots: Partial<ChatbotSlot> = {},
   conversationHistory: OpenAI.Chat.ChatCompletionMessageParam[] = []
 ): Promise<ChatbotResponse> {
+  const client = getOpenAI();
+  if (!client) {
+    return {
+      message: 'Chatbot şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.',
+      missingSlots: [],
+      extractedSlots: currentSlots,
+      isComplete: false,
+    };
+  }
+  
   try {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: 'system', content: SYSTEM_PROMPT },
@@ -65,7 +86,7 @@ export async function processChatbotMessage(
       },
     ];
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
       messages,
       temperature: 0.7,

@@ -1,18 +1,34 @@
-import { Queue } from 'bullmq';
-import IORedis from 'ioredis';
+// Lazy initialization for Redis - only connect when needed
+let notificationQueue: any = null;
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-
-export const notificationQueue = new Queue('notifications', {
-  connection,
-  defaultJobOptions: {
-    attempts: 5,
-    backoff: { type: 'exponential', delay: 2000 },
-    removeOnComplete: 1000,
-    removeOnFail: 1000,
-  },
-});
+const getQueue = () => {
+  if (notificationQueue) return notificationQueue;
+  
+  // Only initialize if REDIS_URL is available
+  if (!process.env.REDIS_URL) {
+    return null;
+  }
+  
+  try {
+    const { Queue } = require('bullmq');
+    const IORedis = require('ioredis');
+    const redisUrl = process.env.REDIS_URL;
+    const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+    
+    notificationQueue = new Queue('notifications', {
+      connection,
+      defaultJobOptions: {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: 1000,
+        removeOnFail: 1000,
+      },
+    });
+    return notificationQueue;
+  } catch {
+    return null;
+  }
+};
 
 export type NotificationJobData = {
   notificationId: string;
@@ -23,11 +39,19 @@ export type NotificationJobData = {
 };
 
 export async function enqueueNotification(data: NotificationJobData) {
-  return notificationQueue.add('send', data, {
+  const queue = getQueue();
+  if (!queue) {
+    // Redis not available, log and skip
+    console.warn('Redis not available, skipping notification queue');
+    return null;
+  }
+  return queue.add('send', data, {
     delay: 0,
     attempts: 5,
   });
 }
+
+export { getQueue as notificationQueue };
 
 export default {
   enqueueNotification,
