@@ -1,23 +1,120 @@
 'use client';
 
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
+interface UserStats {
+  totalUsers: number;
+  totalOrders: number;
+  totalProducts: number;
+}
+
 export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [stats, setStats] = useState<UserStats>({ totalUsers: 0, totalOrders: 0, totalProducts: 0 });
+  const [loading, setLoading] = useState(true);
+
+  // Check authorization and fetch stats
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/unauthorized?reason=not-authenticated');
+      return;
+    }
+
+    if (status === 'authenticated' && session?.user?.role !== 'SUPER_ADMIN' && session?.user?.role !== 'ADMIN') {
+      router.push('/auth/unauthorized?reason=insufficient-role&requiredRole=SUPER_ADMIN|ADMIN');
+      return;
+    }
+
+    // Fetch dashboard stats
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/admin/stats');
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (status === 'authenticated') {
+      fetchStats();
+    }
+  }, [status, session, router]);
+
+  if (status === 'loading') {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mb-4">
+              <svg className="w-6 h-6 text-purple-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <p className="text-gray-600">Yükleniyor...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+  const userEmail = session?.user?.email || 'Kullanıcı';
+  const userName = session?.user?.name || userEmail.split('@')[0];
+
   return (
     <>
       <Header />
       
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* 🏛️ SUPER_ADMIN Welcome Section */}
+        {isSuperAdmin && (
+          <section className="bg-gradient-to-r from-amber-600 via-purple-600 to-purple-700 text-white py-8 mb-8">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur">
+                  <svg className="w-8 h-8 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Hoş Geldiniz, SUPER_ADMIN</h2>
+                  <p className="text-white/90">Sarayın anahtarlarını başarıyla taşıyorsunuz</p>
+                  <p className="text-sm text-white/70 mt-2">Giriş: {userEmail}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Hero */}
         <section className="bg-gradient-to-r from-primary-800 to-primary-700 text-white py-16">
           <div className="container mx-auto px-4">
-            <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Admin Paneli
-            </h1>
-            <p className="text-xl opacity-90">
-              Sistem yönetimi ve kontrol merkezi
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
+                  Admin Paneli
+                </h1>
+                <p className="text-xl opacity-90">
+                  Sistem yönetimi ve kontrol merkezi
+                </p>
+              </div>
+              <div className="hidden md:block text-right">
+                <p className="text-sm text-white/70">Rol:</p>
+                <p className="text-2xl font-bold text-amber-300">{session?.user?.role}</p>
+              </div>
+            </div>
           </div>
         </section>
 

@@ -22,25 +22,29 @@ export async function middleware(request: NextRequest) {
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('X-XSS-Protection', '1; mode=block');
 
-  // Protect /admin routes - require ADMIN or SUPER_ADMIN role
-  if (request.nextUrl.pathname.startsWith('/admin') && 
-      !request.nextUrl.pathname.startsWith('/admin/login')) {
+  // 🏛️ Protect /admin routes - Phase 2: SUPER_ADMIN or ADMIN role only
+  if (request.nextUrl.pathname.startsWith('/admin')) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     
     // Check if authenticated
     if (!token) {
-      const adminLoginUrl = new URL('/admin/login', request.url);
-      adminLoginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
-      return NextResponse.redirect(adminLoginUrl);
+      const unauthorizedUrl = new URL('/auth/unauthorized', request.url);
+      unauthorizedUrl.searchParams.set('reason', 'not-authenticated');
+      return NextResponse.redirect(unauthorizedUrl);
     }
 
     // Check if user has admin role
     const userRole = token.role as string;
     if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
-      // Redirect to access denied page or home
-      const accessDeniedUrl = new URL('/admin/unauthorized', request.url);
-      return NextResponse.redirect(accessDeniedUrl);
+      // Redirect to unauthorized page
+      const unauthorizedUrl = new URL('/auth/unauthorized', request.url);
+      unauthorizedUrl.searchParams.set('reason', 'insufficient-role');
+      unauthorizedUrl.searchParams.set('requiredRole', 'SUPER_ADMIN|ADMIN');
+      return NextResponse.redirect(unauthorizedUrl);
     }
+
+    // Log admin access for security audit (Phase 2)
+    console.log(`[ADMIN ACCESS] User ${token.email} (${userRole}) accessed ${request.nextUrl.pathname}`);
   }
 
   // Protect /siparislerim (orders page) - require authentication

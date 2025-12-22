@@ -26,7 +26,7 @@ declare module 'next-auth' {
       email?: string | null;
       name?: string | null;
       phone?: string | null;
-      role: UserRole;
+      role: string;
       locale: string;
     };
   }
@@ -36,7 +36,7 @@ declare module 'next-auth' {
     email?: string | null;
     name?: string | null;
     phone?: string | null;
-    role: UserRole;
+    role: string;
     locale: string;
   }
 }
@@ -71,7 +71,7 @@ export const authOptions: NextAuthOptions = {
             id: 'test-user-1',
             email: 'test@example.com',
             name: 'Test Kullanıcı',
-            role: UserRole.CUSTOMER,
+            role: 'CUSTOMER',
           } as any;
         }
 
@@ -99,27 +99,32 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role as string,
+          role: user.role,
         } as any;
       },
     }),
 
-    // Google OAuth (Admin için)
+    // Google OAuth - SUPER_ADMIN'ın özel giriş kapısı (Phase 2)
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || 'PLACEHOLDER_CLIENT_ID',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'PLACEHOLDER_CLIENT_SECRET',
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           prompt: 'select_account',
+          access_type: 'offline',
         },
       },
       profile(_profile) {
+        // 🏛️ SUPER_ADMIN Otoritesi: serdraal@gmail.com otomatik olarak en yüksek rolü alır
+        const isSuperAdmin = _profile.email === 'serdraal@gmail.com';
+
         return {
           id: _profile.sub,
           email: _profile.email,
           name: _profile.name,
           phone: null,
-          role: UserRole.CUSTOMER, // Varsayılan - admin manuel olarak yükseltilmeli
+          role: isSuperAdmin ? 'SUPER_ADMIN' : 'CUSTOMER',
           locale: _profile.locale?.startsWith('tr') ? 'tr' : 'en',
         };
       },
@@ -167,9 +172,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     async signIn({ user, account, profile }) {
-      // OAuth ile giriş yapan kullanıcıları kontrol et
-      // Mark profile as referenced to avoid unused var TS error when not needed
-      void profile;
+      // 🏛️ SUPER_ADMIN Güvenliği: Yetkisiz gelen girişleri engelle
       if (account?.provider === 'google') {
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email! },
@@ -177,6 +180,22 @@ export const authOptions: NextAuthOptions = {
 
         if (existingUser) {
           return true; // Mevcut kullanıcı giriş yapabilir
+        } else {
+          // Yeni Google OAuth kullanıcı oluştur
+          // serdraal@gmail.com otomatik olarak SUPER_ADMIN
+          const newRole = user.email === 'serdraal@gmail.com' 
+            ? 'SUPER_ADMIN' 
+            : 'CUSTOMER';
+
+          await prisma.user.create({
+            data: {
+              email: user.email!,
+              name: user.name || 'Google User',
+              role: newRole,
+            },
+          });
+
+          return true;
         }
       }
 
@@ -222,31 +241,28 @@ export const authOptions: NextAuthOptions = {
 // AUTHORIZATION HELPERS
 // ============================================================================
 
-export function isAdmin(session: Session | null): boolean {
-  return (
-    session?.user?.role === UserRole.ADMIN ||
-    session?.user?.role === UserRole.SUPER_ADMIN
-  );
+export function isSuperAdmin(session: Session | null): boolean {
+  return session?.user?.role === 'SUPER_ADMIN';
 }
 
-export function isSuperAdmin(session: Session | null): boolean {
-  return session?.user?.role === UserRole.SUPER_ADMIN;
+export function isAdmin(session: Session | null): boolean {
+  return session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN';
 }
 
 export function isOperator(session: Session | null): boolean {
   return (
-    session?.user?.role === UserRole.OPERATOR ||
-    session?.user?.role === UserRole.ADMIN ||
-    session?.user?.role === UserRole.SUPER_ADMIN
+    session?.user?.role === 'OPERATOR' ||
+    session?.user?.role === 'ADMIN' ||
+    session?.user?.role === 'SUPER_ADMIN'
   );
 }
 
-export function hasRole(session: Session | null, roles: UserRole[]): boolean {
+export function hasRole(session: Session | null, roles: string[]): boolean {
   return session?.user?.role ? roles.includes(session.user.role) : false;
 }
 
 // API route authorization check
-export function requireAuth(session: Session | null, allowedRoles?: UserRole[]) {
+export function requireAuth(session: Session | null, allowedRoles?: string[]) {
   if (!session) {
     throw new Error('Yetkisiz erişim');
   }
