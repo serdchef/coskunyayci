@@ -30,7 +30,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'sku and phone required' }, { status: 400 });
     }
 
-    const product = await prisma.product.findUnique({ where: { sku } });
+    // Phase 1: Mock product lookup (no database yet)
+    const mockProducts = [
+      { sku: 'MEK_001', name: 'Mekik Baklava', priceCents: 82745 },
+      { sku: 'KARE_001', name: 'Kare Baklava', priceCents: 86970 },
+      { sku: 'HAVUC_001', name: 'Havuç Dilimi', priceCents: 86970 },
+    ];
+    
+    const product = mockProducts.find(p => p.sku === sku);
     if (!product) {
       return NextResponse.json({ error: 'product not found' }, { status: 404 });
     }

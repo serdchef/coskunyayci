@@ -90,35 +90,51 @@ export default prisma;
 
 /**
  * Tüm ürünleri veritabanından çek (B2C için)
+ * Phase 1: Mock data döndürülüyor (ürün modeli henüz yok)
  */
 export async function getProductsForB2C() {
   try {
-    const products = await prisma.product.findMany({
-      include: {
-        variants: {
-          orderBy: {
-            size: 'asc',
-          },
-        },
+    // Phase 1: Mock product data (no database yet)
+    const mockProducts = [
+      {
+        id: 'mock-1',
+        sku: 'MEK_001',
+        name: 'Mekik Baklava',
+        description: 'Gaziantep\'in en klasik baklava çeşidi. İnce yapılı ve lezzetli Mekik Baklava.',
+        basePrice: 827.45,
+        category: 'Baklavalar',
+        region: 'Gaziantep',
+        image: '/images/products/klasik.jpg',
+        productType: 'BAKLAVA',
+        variants: [],
       },
-      orderBy: {
-        category: 'asc',
+      {
+        id: 'mock-2',
+        sku: 'KARE_001',
+        name: 'Kare Baklava',
+        description: 'Kare şeklinde kesilen, eşit ölçülü premium baklava. Her parça eşit ve mükemmel.',
+        basePrice: 869.70,
+        category: 'Baklavalar',
+        region: 'Gaziantep',
+        image: '/images/products/kare-baklava.jpg',
+        productType: 'BAKLAVA',
+        variants: [],
       },
-    });
+      {
+        id: 'mock-3',
+        sku: 'HAVUC_001',
+        name: 'Havuç Dilimi',
+        description: 'Parlak ve göz kamaştırıcı baklava. Sunumda şaşırtıcı, lezzette mükemmel.',
+        basePrice: 869.70,
+        category: 'Baklavalar',
+        region: 'Gaziantep',
+        image: '/images/products/havuc-dilimi.jpg',
+        productType: 'BAKLAVA',
+        variants: [],
+      },
+    ];
 
-    // Transform to match expected shape
-    return products.map((product: any) => ({
-      id: product.id,
-      sku: product.sku,
-      name: product.name,
-      description: product.description,
-      category: product.category,
-      basePrice: product.basePrice,
-      image: product.image,
-      productType: product.productType,
-      region: product.region,
-      variants: product.variants,
-    }));
+    return mockProducts;
   } catch (error) {
     console.error('Error fetching B2C products:', error);
     return [];
@@ -127,16 +143,53 @@ export async function getProductsForB2C() {
 
 /**
  * Belirli bir ürünü ID ile çek
+ * Phase 1: Mock data döndürülüyor (ürün modeli henüz yok)
  */
 export async function getProductById(productId: string) {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        variants: true,
+    // Phase 1: Mock product data (no database yet)
+    const mockProducts = [
+      {
+        id: 'mock-1',
+        sku: 'MEK_001',
+        name: 'Mekik Baklava',
+        description: 'Gaziantep\'in en klasik baklava çeşidi. İnce yapılı ve lezzetli Mekik Baklava.',
+        basePrice: 827.45,
+        category: 'Baklavalar',
+        region: 'Gaziantep',
+        image: '/images/products/klasik.jpg',
+        productType: 'BAKLAVA',
+        variants: [],
       },
-    });
-    return product;
+      {
+        id: 'mock-2',
+        sku: 'KARE_001',
+        name: 'Kare Baklava',
+        description: 'Kare şeklinde kesilen, eşit ölçülü premium baklava. Her parça eşit ve mükemmel.',
+        basePrice: 869.70,
+        category: 'Baklavalar',
+        region: 'Gaziantep',
+        image: '/images/products/kare-baklava.jpg',
+        productType: 'BAKLAVA',
+        variants: [],
+      },
+      {
+        id: 'mock-3',
+        sku: 'HAVUC_001',
+        name: 'Havuç Dilimi',
+        description: 'Parlak ve göz kamaştırıcı baklava. Sunumda şaşırtıcı, lezzette mükemmel.',
+        basePrice: 869.70,
+        category: 'Baklavalar',
+        region: 'Gaziantep',
+        image: '/images/products/havuc-dilimi.jpg',
+        productType: 'BAKLAVA',
+        variants: [],
+      },
+    ];
+
+    // Find product by ID or SKU
+    const product = mockProducts.find(p => p.id === productId || p.sku === productId);
+    return product || null;
   } catch (error) {
     console.error(`Error fetching product ${productId}:`, error);
     return null;

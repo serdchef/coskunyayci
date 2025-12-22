@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -12,6 +12,7 @@ model User {
   email     String   @unique
   name      String?
   password  String?  // hashed password (optional if using OAuth)
+  role      String   @default("CUSTOMER") // CUSTOMER, OPERATOR, ADMIN, SUPER_ADMIN
   createdAt DateTime @default(now())
   orders    Order[]
   addresses Address[]
@@ -43,11 +44,40 @@ model OrderItem {
 }
 
 model Address {
-  id       String @id @default(cuid())
+  id       String   @id @default(cuid())
   userId   String?
-  user     User?  @relation(fields: [userId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+  orders   Order[]  // Back-relation for Order.address
   street   String
   city     String
   district String
   zipCode  String
+}
+model Product {
+  id           String            @id @default(cuid())
+  sku          String            @unique
+  name         String
+  description  String?
+  productType  String            // CLASSIC, PISTACHIO, CHOCOLATE, SPECIALTY, TRAY, CORPORATE
+  category     String
+  region       String
+  basePrice    Float
+  image        String?
+  variants     ProductVariant[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String   // 250g, 500g, 1kg, Corporate
+  price     Float
+  stock     Int      @default(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, size])
+  @@index([productId])
 }

@@ -6,11 +6,81 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    const products = await getProductsForB2C();
-    
+    // Gerçek veritabanından ürünleri çek
+    const products = await prisma.product.findMany({
+      include: {
+        variants: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Veritabanında ürün yoksa mock data döndür
+    if (!products || products.length === 0) {
+      const mockProducts = [
+        {
+          id: 'mock-1',
+          sku: 'MEK_001',
+          name: 'Mekik Baklava',
+          description: 'Gaziantep\'in en klasik baklava çeşidi. İnce yapılı ve lezzetli Mekik Baklava.',
+          basePrice: 827.45,
+          category: 'Baklavalar',
+          region: 'Gaziantep',
+          image: '/images/products/klasik.jpg',
+          variants: [],
+        },
+        {
+          id: 'mock-2',
+          sku: 'KARE_001',
+          name: 'Kare Baklava',
+          description: 'Kare şeklinde kesilen, eşit ölçülü premium baklava. Her parça eşit ve mükemmel.',
+          basePrice: 869.70,
+          category: 'Baklavalar',
+          region: 'Gaziantep',
+          image: '/images/products/kare-baklava.jpg',
+          variants: [],
+        },
+        {
+          id: 'mock-3',
+          sku: 'HAVUC_001',
+          name: 'Havuç Dilimi',
+          description: 'Parlak ve göz kamaştırıcı baklava. Sunumda şaşırtıcı, lezzette mükemmel.',
+          basePrice: 869.70,
+          category: 'Baklavalar',
+          region: 'Gaziantep',
+          image: '/images/products/havuc-dilimi.jpg',
+          variants: [],
+        },
+      ];
+      return NextResponse.json({
+        success: true,
+        products: mockProducts,
+      });
+    }
+
+    // Gerçek ürünleri format et
+    const formattedProducts = products.map(product => ({
+      id: product.id,
+      sku: product.sku,
+      name: product.name,
+      description: product.description,
+      basePrice: product.basePrice,
+      category: product.category,
+      region: product.region,
+      productType: product.productType,
+      image: product.image || '/images/placeholder.jpg',
+      variants: product.variants.map(v => ({
+        id: v.id,
+        size: v.size,
+        price: v.price,
+        stock: v.stock,
+      })),
+    }));
+
     return NextResponse.json({
       success: true,
-      products: products,
+      products: formattedProducts,
     });
   } catch (error: any) {
     console.error('Error fetching products:', error);
@@ -35,16 +105,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'sku required' }, { status: 400 });
     }
 
-    const product = await prisma.product.findUnique({
-      where: { sku },
-      include: { variants: true },
-    });
+    // Phase 1: Mock product data (no database yet)
+    const mockProduct = {
+      id: 'mock-' + sku,
+      sku,
+      name: 'Mock Product',
+      description: 'This is a mock product for Phase 1',
+      basePrice: 100.00,
+      image: '/images/products/klasik.jpg',
+      variants: [],
+    };
 
-    if (!product) {
-      return NextResponse.json({ error: 'product not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(product);
+    return NextResponse.json(mockProduct);
   } catch (error: any) {
     console.error('Error in POST /api/products:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -286,4 +286,57 @@ export async function createIyzicoPayment(
   };
 }
 
+// ============================================================================
+// PAYMENT INTENT ADAPTER
+// ============================================================================
+
+export type CreatePaymentIntentParams = {
+  orderId: string;
+  amount: number; // cents
+  customerEmail: string;
+  customerName: string;
+  description?: string;
+};
+
+export async function createPaymentIntent(
+  params: CreatePaymentIntentParams
+): Promise<{ clientSecret: string; paymentIntentId: string }> {
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: params.amount,
+      currency: 'try',
+      description: params.description || `Order #${params.orderId}`,
+      metadata: {
+        orderId: params.orderId,
+        customerEmail: params.customerEmail,
+        customerName: params.customerName,
+      },
+      receipt_email: params.customerEmail,
+    });
+
+    (async () => {
+      const { default: logger } = await import('./logger');
+      logger.info(
+        {
+          orderId: params.orderId,
+          paymentIntentId: paymentIntent.id,
+          amount: params.amount,
+        },
+        'Payment intent created'
+      );
+    })();
+
+    return {
+      clientSecret: paymentIntent.client_secret || '',
+      paymentIntentId: paymentIntent.id,
+    };
+  } catch (error: any) {
+    (async () => {
+      const { default: logger } = await import('./logger');
+      logger.error({ error, params }, 'Payment intent creation error');
+    })();
+    throw new Error(`Ödeme amacı oluşturulamadı: ${error.message}`);
+  }
+}
+
 export default stripe;
