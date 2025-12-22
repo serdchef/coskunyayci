@@ -29,7 +29,7 @@ export default function LoginPage() {
       } else if (result?.ok) {
         router.push('/');
       }
-    } catch (err) {
+    } catch {
       setError('Bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);

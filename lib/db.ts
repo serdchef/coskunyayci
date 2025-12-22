@@ -16,7 +16,7 @@ import { PrismaClient } from '@prisma/client';
 
 declare global {
   // eslint-disable-next-line no-var
-  var prisma: any | undefined;
+  let prisma: PrismaClient | undefined;
 }
 
 const createPrisma = () => {
@@ -29,42 +29,14 @@ const createPrisma = () => {
   });
 };
 
-// Minimal stub handler: any method returns a safe default to keep pages working
-const makeStub = (): any => {
-  const noopAsync = async (..._args: any[]) => {
-    // default neutral return values
-    return undefined;
-  };
-
-  const handler: ProxyHandler<any> = {
-    get(_target, _prop) {
-      // Common chained access patterns like prisma.product.findMany
-      return new Proxy(noopAsync, {
-        get() {
-          return noopAsync;
-        },
-        apply(_t, _thisArg, _args) {
-          return noopAsync();
-        },
-      });
-    },
-  };
-
-  return new Proxy({}, handler);
-};
-
-let prismaInstance: any;
+let prismaInstance: PrismaClient;
 try {
   prismaInstance = globalThis.prisma ?? createPrisma();
   // assign globally in dev to prevent hot-reload duplicates
   if (process.env.NODE_ENV !== 'production') globalThis.prisma = prismaInstance;
-} catch (err) {
-  // If Prisma client failed to initialize (no DB, wrong schema, etc.),
-  // fall back to a stub that won't throw when pages call methods like
-  // prisma.product.findMany(). This keeps the UI usable with fallback data.
-  // eslint-disable-next-line no-console
-  console.error('Prisma initialization failed, using stubbed client:', err);
-  prismaInstance = makeStub();
+} catch {
+  // If Prisma client failed to initialize, fallback
+  throw new Error('Failed to initialize Prisma client');
 }
 
 // Graceful shutdown for real Prisma client
@@ -79,7 +51,7 @@ if (typeof window === 'undefined' && prismaInstance && typeof prismaInstance.$di
 }
 
 // Export with the PrismaClient type so editor/tsserver can infer model types
-export const prisma: any = prismaInstance;
+export const prisma = prismaInstance;
 export default prisma;
 
 /**

@@ -46,7 +46,7 @@ export default function RegisterPage() {
 
       // Başarılı kayıt -> login sayfasına yönlendir
       router.push('/auth/login?registered=true');
-    } catch (err) {
+    } catch {
       setError('Bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);

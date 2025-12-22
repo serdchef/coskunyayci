@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     // Support both formats: { sku, phone } and { items: [{sku}], customer: {phone} }
     let sku = body.sku;
     let phone = body.phone;
-    let name = body.name || (body.customer?.name) || 'Müşteri';
+    const name = body.name || (body.customer?.name) || 'Müşteri';
     
     // If items array provided (ProductCard format), extract sku from first item
     if (!sku && Array.isArray(body.items) && body.items.length > 0) {

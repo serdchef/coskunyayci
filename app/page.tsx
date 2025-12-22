@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import ProductCard from '@/components/ProductCard';
 import ChatbotWidget from '@/components/ChatbotWidget';
 import CinematicScroll from '@/components/CinematicScroll';
 import RecentlyViewedSection from '@/components/RecentlyViewedSection';
@@ -32,7 +30,6 @@ const FALLBACK_PRODUCTS = [
 
 export default function HomePage() {
   const [products, setProducts] = useState<any[]>([]);
-  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -45,14 +42,12 @@ export default function HomePage() {
         if (data.products && data.products.length > 0) {
           setProducts(data.products);
         }
-      } catch (error) {
-        console.error('Error loading products:', error);
+      } catch {
+        // Error loading products, using fallback
       }
     };
     loadProducts();
   }, []);
-
-  const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
 
   return (
     <div className="flex flex-col min-h-screen">

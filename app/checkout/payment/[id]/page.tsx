@@ -58,7 +58,7 @@ function PaymentForm({ orderId }: { orderId: string }) {
               status: 'CONFIRMED',
             }),
           });
-        } catch (err) {
+        } catch {
           console.warn('Could not update order, continuing to success page');
         }
         
@@ -101,7 +101,7 @@ function PaymentForm({ orderId }: { orderId: string }) {
 
         router.push(`/siparis-basarili/${orderId}`);
       }
-    } catch (err) {
+    } catch {
       setError('Payment processing failed. Please try again.');
     } finally {
       setLoading(false);
@@ -141,7 +141,7 @@ function PaymentForm({ orderId }: { orderId: string }) {
 
 export default function PaymentPage() {
   const params = useParams();
-  const orderId = params.orderId as string;
+  const orderId = params.id as string;
 
   return (
     <>

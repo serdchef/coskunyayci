@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     }
 
     // Basit eşleştirme algoritması
-    let scoreMap: { [key: number]: number } = {};
+    const scoreMap: { [key: number]: number } = {};
     BAKLAVAS.forEach((b) => {
       scoreMap[b.id] = 0;
     });
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
         reason: `${recommendation.name} sizin tercihlerinize perfect uyum sağlıyor.`,
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'API hatası' }, { status: 500 });
   }
 }

@@ -95,7 +95,7 @@ export async function processChatbotMessage(
 
     const responseMessage = completion.choices[0].message;
     let extractedSlots: Partial<ChatbotSlot> = { ...currentSlots };
-    let botMessage = responseMessage.content || 'Üzgünüm, anlayamadım. Tekrar eder misiniz?';
+    const botMessage = responseMessage.content || 'Üzgünüm, anlayamadım. Tekrar eder misiniz?';
 
     // Function call varsa slot'ları güncelle
     if (responseMessage.function_call) {
