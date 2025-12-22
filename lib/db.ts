@@ -154,31 +154,6 @@ export async function getProductById(productId: string) {
 }
 
 /**
- * Kullanıcının B2B profilini çek
- */
-export async function getB2BProfile(userId: string) {
-  try {
-    const profile = await prisma.b2bProfile.findUnique({
-      where: { userId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            phone: true,
-          },
-        },
-      },
-    });
-    return profile;
-  } catch (error) {
-    console.error(`Error fetching B2B profile for user ${userId}:`, error);
-    return null;
-  }
-}
-
-/**
  * Kullanıcının sipariş geçmişini çek
  */
 export async function getOrderHistory(userId: string, limit: number = 10) {
@@ -186,17 +161,7 @@ export async function getOrderHistory(userId: string, limit: number = 10) {
     const orders = await prisma.order.findMany({
       where: { userId },
       include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-        },
+        items: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -216,11 +181,9 @@ export async function getOrderHistory(userId: string, limit: number = 10) {
 export async function createOrder(data: {
   userId: string;
   totalPrice: number;
-  address: string;
-  city: string;
-  zipCode: string;
+  addressId?: string;
   items: Array<{
-    productId: string;
+    productName: string;
     quantity: number;
     price: number;
   }>;
@@ -230,13 +193,11 @@ export async function createOrder(data: {
       data: {
         userId: data.userId,
         totalPrice: data.totalPrice,
-        address: data.address,
-        city: data.city,
-        zipCode: data.zipCode,
+        addressId: data.addressId,
         status: 'CONFIRMED',
         items: {
           create: data.items.map((item) => ({
-            productId: item.productId,
+            productName: item.productName,
             quantity: item.quantity,
             price: item.price,
           })),
@@ -255,40 +216,31 @@ export async function createOrder(data: {
 
 /**
  * Toplu sipariş (B2B) oluştur
+ * Not: B2B profili şemada henüz yok, basit sipariş olarak oluşturulur
  */
 export async function createB2BOrder(data: {
   userId: string;
   totalPrice: number;
   items: Array<{
-    productId: string;
+    productName: string;
     quantity: number;
     price: number;
   }>;
   notes?: string;
 }) {
   try {
-    // Önce B2B profilini al (discount bilgisi için)
-    const b2bProfile = await getB2BProfile(data.userId);
-    
-    if (!b2bProfile) {
-      throw new Error('B2B profile not found');
-    }
-
-    // Toplam fiyata indirim uygula
-    const discountRate = b2bProfile.discountRate || 0.15;
+    // B2B indirim oranı (sabit)
+    const discountRate = 0.15;
     const discountedPrice = data.totalPrice * (1 - discountRate);
 
     const order = await prisma.order.create({
       data: {
         userId: data.userId,
         totalPrice: discountedPrice,
-        address: b2bProfile.address || 'Şirket Adresi',
-        city: 'İstanbul',
-        zipCode: '34000',
         status: data.items.reduce((sum, item) => sum + item.quantity, 0) > 100 ? 'PENDING' : 'CONFIRMED',
         items: {
           create: data.items.map((item) => ({
-            productId: item.productId,
+            productName: item.productName,
             quantity: item.quantity,
             price: item.price * (1 - discountRate),
           })),
@@ -307,6 +259,7 @@ export async function createB2BOrder(data: {
 
 /**
  * B2B kayıt oluştur
+ * Not: B2B profili şemada henüz yok, null döner
  */
 export async function createB2BProfile(data: {
   userId: string;
@@ -318,25 +271,8 @@ export async function createB2BProfile(data: {
   companySize?: string;
   address?: string;
 }) {
-  try {
-    const profile = await prisma.b2bProfile.create({
-      data: {
-        userId: data.userId,
-        companyName: data.companyName,
-        taxId: data.taxId,
-        department: data.department,
-        authorizedName: data.authorizedName,
-        industry: data.industry,
-        companySize: data.companySize || 'SMALL',
-        address: data.address,
-        creditLimit: 25000, // Default credit limit
-        discountRate: 0.15, // Default 15% discount
-        approved: false, // Admin onayı gerekli
-      },
-    });
-    return profile;
-  } catch (error) {
-    console.error('Error creating B2B profile:', error);
-    return null;
-  }
+  // B2B profili şemada yok, şimdilik sadece log
+  console.log('B2B profile creation requested for user:', data.userId);
+  console.log('Company:', data.companyName);
+  return null;
 }

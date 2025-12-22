@@ -182,6 +182,11 @@ export type VideoScriptParams = {
 };
 
 export async function generateVideoScript(params: VideoScriptParams): Promise<VideoScriptScene[]> {
+  const client = getOpenAI();
+  if (!client) {
+    return [];
+  }
+  
   try {
     const prompt = `${params.language === 'tr' ? 'Türkçe' : 'İngilizce'} bir reklam video senaryosu oluştur:
 
@@ -206,7 +211,7 @@ JSON formatında döndür:
   "textOverlay": "..."
 }]`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [
         {

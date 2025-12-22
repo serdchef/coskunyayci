@@ -1,6 +1,27 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+// Define product types inline (Prisma types may not be available at build time)
+interface ProductVariantType {
+  id: string;
+  size: string;
+  price: number;
+  stock: number;
+}
+
+interface ProductType {
+  id: string;
+  sku: string;
+  name: string;
+  description: string | null;
+  basePrice: number;
+  category: string;
+  region: string;
+  productType: string;
+  image: string | null;
+  variants: ProductVariantType[];
+}
+
 // Fallback ürünler - Vercel'de veritabanı yoksa bunlar gösterilir
 const FALLBACK_PRODUCTS = [
   { id: 'fallback-1', sku: 'KLASIK_001', name: 'Klasik Baklava', description: 'Gaziantep\'in en meşhur klasik baklavası.', basePrice: 1487.70, category: 'Klasik', region: 'Gaziantep', productType: 'CLASSIC', image: '/images/products/klasik.jpg', variants: [{ id: 'v1', size: '250g', price: 1487.70, stock: 100 }, { id: 'v2', size: '500g', price: 2529.09, stock: 100 }] },
@@ -24,7 +45,8 @@ const FALLBACK_PRODUCTS = [
 export async function GET() {
   try {
     // Gerçek veritabanından ürünleri çek
-    const products = await prisma.product.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const products = await (prisma as any).product.findMany({
       include: {
         variants: true,
       },
@@ -42,7 +64,7 @@ export async function GET() {
     }
 
     // Gerçek ürünleri format et
-    const formattedProducts = products.map(product => ({
+    const formattedProducts = products.map((product: ProductType) => ({
       id: product.id,
       sku: product.sku,
       name: product.name,
@@ -52,7 +74,7 @@ export async function GET() {
       region: product.region,
       productType: product.productType,
       image: product.image || '/images/placeholder.jpg',
-      variants: product.variants.map(v => ({
+      variants: product.variants.map((v: ProductVariantType) => ({
         id: v.id,
         size: v.size,
         price: v.price,

@@ -3,17 +3,21 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// Type assertion helper for dynamic Prisma operations
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = prisma as any;
+
 async function main() {
   console.log('🌟 Starting comprehensive seed...');
 
   // Delete existing data in correct order (respecting foreign keys)
   try {
-    await prisma.orderItem.deleteMany({});
-    await prisma.order.deleteMany({});
-    await prisma.productVariant.deleteMany({});
-    await prisma.product.deleteMany({});
-    await prisma.address.deleteMany({});
-    await prisma.user.deleteMany({});
+    await db.orderItem.deleteMany({});
+    await db.order.deleteMany({});
+    await db.productVariant.deleteMany({});
+    await db.product.deleteMany({});
+    await db.address.deleteMany({});
+    await db.user.deleteMany({});
     console.log('✓ Cleared existing data');
   } catch (error) {
     console.error('Error clearing data:', error);
@@ -23,7 +27,7 @@ async function main() {
   const hashedPassword = await bcrypt.hash('test123', 10);
 
   // Create test user
-  const user1 = await prisma.user.create({
+  const user1 = await db.user.create({
     data: {
       email: 'test@example.com',
       name: 'Test User',
@@ -32,7 +36,7 @@ async function main() {
   });
 
   // Create SUPER_ADMIN user (Sarayın Muhafızı - The Palace Guard)
-  const adminUser = await prisma.user.create({
+  const adminUser = await db.user.create({
     data: {
       email: 'serdchef@gmail.com',
       name: '👑 Saray Muhafızı (Admin)',
@@ -41,7 +45,7 @@ async function main() {
   });
 
   // Create addresses
-  const address1 = await prisma.address.create({
+  const address1 = await db.address.create({
     data: {
       userId: user1.id,
       street: 'Atatürk Caddesi No:123',
@@ -84,7 +88,7 @@ async function main() {
 
   const createdProducts = [];
   for (const productData of products) {
-    const product = await prisma.product.create({ data: productData });
+    const product = await db.product.create({ data: productData });
     createdProducts.push(product);
     
     const variants = [
@@ -95,7 +99,7 @@ async function main() {
     ];
     
     for (const variant of variants) {
-      await prisma.productVariant.create({
+      await db.productVariant.create({
         data: {
           productId: product.id,
           size: variant.size,
@@ -107,7 +111,7 @@ async function main() {
   }
 
   // Create sample orders
-  const order1 = await prisma.order.create({
+  const order1 = await db.order.create({
     data: {
       userId: user1.id,
       addressId: address1.id,

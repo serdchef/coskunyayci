@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { enqueueNotification } from '@/lib/notifications';
 
 // Minimal, safe quick-order endpoint that avoids heavy imports so the Next
 // web process doesn't pull worker-thread-dependent bundles.
@@ -32,9 +31,9 @@ export async function POST(request: NextRequest) {
 
     // Phase 1: Mock product lookup (no database yet)
     const mockProducts = [
-      { sku: 'MEK_001', name: 'Mekik Baklava', priceCents: 82745 },
-      { sku: 'KARE_001', name: 'Kare Baklava', priceCents: 86970 },
-      { sku: 'HAVUC_001', name: 'Havuç Dilimi', priceCents: 86970 },
+      { sku: 'MEK_001', name: 'Mekik Baklava', price: 827.45 },
+      { sku: 'KARE_001', name: 'Kare Baklava', price: 869.70 },
+      { sku: 'HAVUC_001', name: 'Havuç Dilimi', price: 869.70 },
     ];
     
     const product = mockProducts.find(p => p.sku === sku);
@@ -42,43 +41,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'product not found' }, { status: 404 });
     }
 
-    const now = new Date();
+    // Create order using correct schema (Order with OrderItems)
     const order = await prisma.order.create({
       data: {
-        orderNumber: `QK-${now.getTime()}`,
-        customerName: name || 'Müşteri',
-        customerPhone: phone,
-        items: [{ sku: product.sku, name: product.name, qty: 1, priceCents: product.priceCents, options: {} }],
-        subtotalCents: product.priceCents,
-        taxCents: 0,
-        discountCents: 0,
-        deliveryFeeCents: 0,
-        totalCents: product.priceCents,
+        totalPrice: product.price,
         status: 'PENDING',
-        deliveryType: 'PICKUP',
-        paymentMethod: 'CASH',
-        paymentStatus: 'PENDING',
-        source: 'quick-order',
+        items: {
+          create: [
+            {
+              productName: product.name,
+              quantity: 1,
+              price: product.price,
+            },
+          ],
+        },
+      },
+      include: {
+        items: true,
       },
     });
 
-    // Create notification for business owner
-    const message = `Yeni sipariş: ${product.name} \nSipariş No: ${order.orderNumber} \nTelefon: ${phone}`;
+    const orderNumber = `QK-${order.id.slice(-8).toUpperCase()}`;
+    
+    // Log notification instead of creating (Notification model not in schema)
+    console.log(`[quick-order] Notification: Yeni sipariş: ${product.name}, Sipariş No: ${orderNumber}, Telefon: ${phone}`);
 
-    const notif = await prisma.notification.create({
-      data: {
-        orderId: order.id,
-        type: 'whatsapp',
-        to: process.env.BUSINESS_PHONE_NUMBER || '',
-        body: message,
-        status: 'PENDING',
-      },
-    });
-
-    await enqueueNotification({ notificationId: notif.id, orderId: order.id, type: 'whatsapp', to: notif.to, body: notif.body });
-
-    return NextResponse.json({ success: true, orderId: order.id, orderNumber: order.orderNumber }, { status: 201 });
-  } catch (err: any) {
+    return NextResponse.json({ success: true, orderId: order.id, orderNumber }, { status: 201 });
+  } catch (err: unknown) {
     // eslint-disable-next-line no-console
     console.error('quick-order error:', err);
     
