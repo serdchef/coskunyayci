@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'E-posta', type: 'email' },
         password: { label: 'Şifre', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('E-posta ve şifre gerekli');
         }
@@ -71,10 +71,8 @@ export const authOptions: NextAuthOptions = {
             id: 'test-user-1',
             email: 'test@example.com',
             name: 'Test Kullanıcı',
-            phone: '+905551234567',
             role: UserRole.CUSTOMER,
-            locale: 'tr',
-          };
+          } as any;
         }
 
         const user = await prisma.user.findUnique({
@@ -85,22 +83,13 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Kullanıcı bulunamadı');
         }
 
-        if (!user.isActive) {
-          throw new Error('Hesabınız devre dışı');
-        }
-
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
           throw new Error('Geçersiz şifre');
         }
 
-        // Son giriş zamanını güncelle
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        });
-
+        // Log user login
         (async () => {
           const { default: logger } = await import('./logger');
           logger.info({ userId: user.id, email: user.email }, 'User logged in');
@@ -110,10 +99,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          phone: user.phone,
-          role: user.role,
-          locale: user.locale,
-        };
+          role: user.role as string,
+        } as any;
       },
     }),
 
@@ -188,8 +175,8 @@ export const authOptions: NextAuthOptions = {
           where: { email: user.email! },
         });
 
-        if (existingUser && !existingUser.isActive) {
-          return false; // Devre dışı hesaplar giremez
+        if (existingUser) {
+          return true; // Mevcut kullanıcı giriş yapabilir
         }
       }
 
