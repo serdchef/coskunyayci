@@ -5,38 +5,23 @@
 
 import { PrismaClient } from '@prisma/client';
 
-/**
- * Safe Prisma export
- *
- * Some developer machines may not have a reachable Postgres instance or the
- * generated Prisma client may fail to initialize. To avoid crashing the whole
- * Next.js server for pages that only read data, we export a `prisma` object
- * that falls back to a harmless proxy when initialization fails.
- */
-
 declare global {
   // eslint-disable-next-line no-var
-  let prisma: PrismaClient | undefined;
+  var prisma: PrismaClient | undefined;
 }
 
-const createPrisma = () => {
-  if (!PrismaClient) {
-    throw new Error('Prisma client not available');
-  }
+const createPrisma = (): PrismaClient => {
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
     errorFormat: 'pretty',
   });
 };
 
-let prismaInstance: PrismaClient;
-try {
-  prismaInstance = globalThis.prisma ?? createPrisma();
-  // assign globally in dev to prevent hot-reload duplicates
-  if (process.env.NODE_ENV !== 'production') globalThis.prisma = prismaInstance;
-} catch {
-  // If Prisma client failed to initialize, fallback
-  throw new Error('Failed to initialize Prisma client');
+const prismaInstance = globalThis.prisma ?? createPrisma();
+
+// assign globally in dev to prevent hot-reload duplicates
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = prismaInstance;
 }
 
 // Graceful shutdown for real Prisma client
@@ -44,7 +29,7 @@ if (typeof window === 'undefined' && prismaInstance && typeof prismaInstance.$di
   process.on('beforeExit', async () => {
     try {
       await prismaInstance.$disconnect();
-    } catch (e) {
+    } catch {
       // ignore
     }
   });
