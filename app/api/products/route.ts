@@ -1,8 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getProductsForB2C } from '@/lib/db';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 
-const prisma = new PrismaClient();
+// Fallback ürünler - Vercel'de veritabanı yoksa bunlar gösterilir
+const FALLBACK_PRODUCTS = [
+  { id: 'fallback-1', sku: 'KLASIK_001', name: 'Klasik Baklava', description: 'Gaziantep\'in en meşhur klasik baklavası.', basePrice: 1487.70, category: 'Klasik', region: 'Gaziantep', productType: 'CLASSIC', image: '/images/products/klasik.jpg', variants: [{ id: 'v1', size: '250g', price: 1487.70, stock: 100 }, { id: 'v2', size: '500g', price: 2529.09, stock: 100 }] },
+  { id: 'fallback-2', sku: 'KLASIK_002', name: 'Kare Baklava', description: 'Kare şeklinde hazırlanmış, ince fıstıklı baklava.', basePrice: 1487.70, category: 'Klasik', region: 'Gaziantep', productType: 'CLASSIC', image: '/images/products/kare-baklava.jpg', variants: [{ id: 'v3', size: '250g', price: 1487.70, stock: 100 }] },
+  { id: 'fallback-3', sku: 'KLASIK_003', name: 'Yaprak Sabiyet', description: 'İnce yapraklar arasında badem ve fıstıkla hazırlanmış baklava.', basePrice: 1487.70, category: 'Klasik', region: 'Gaziantep', productType: 'CLASSIC', image: '/images/products/yaprak-sobiyet.jpg', variants: [] },
+  { id: 'fallback-4', sku: 'FISTIK_001', name: 'Antep Özel', description: 'Gaziantep fıstığının en seçkin taneleriyle hazırlanmış özel baklava.', basePrice: 1689.70, category: 'Fıstık', region: 'Gaziantep', productType: 'PISTACHIO', image: '/images/products/antep-ozel.jpg', variants: [] },
+  { id: 'fallback-5', sku: 'FISTIK_002', name: 'Cevizli Baklava', description: 'Ceviz içeriği ile zenginleştirilmiş leziz baklava.', basePrice: 1689.70, category: 'Fıstık', region: 'Gaziantep', productType: 'PISTACHIO', image: '/images/products/cevizli.jpg', variants: [] },
+  { id: 'fallback-6', sku: 'FISTIK_003', name: 'Dolama', description: 'Özel tarif ile yapılmış dolama baklava.', basePrice: 1689.70, category: 'Fıstık', region: 'Gaziantep', productType: 'PISTACHIO', image: '/images/products/dolama.jpg', variants: [] },
+  { id: 'fallback-7', sku: 'CHOCO_001', name: 'Havuç Dilimi', description: 'Havuç şeklinde dilimlenmiş, soslu ve leziz baklava.', basePrice: 1869.70, category: 'Çikolata', region: 'Gaziantep', productType: 'CHOCOLATE', image: '/images/products/havuc-dilimi.jpg', variants: [] },
+  { id: 'fallback-8', sku: 'CHOCO_002', name: 'Soğuk Baklava', description: 'Soğuk olarak sunulan, tazeliğini haftalar boyunca koruyan baklava.', basePrice: 1869.70, category: 'Çikolata', region: 'Gaziantep', productType: 'CHOCOLATE', image: '/images/products/soguk-baklava.jpg', variants: [] },
+  { id: 'fallback-9', sku: 'SPECIAL_001', name: 'Karışık Baklava', description: 'Tüm çeşitlerimizin bir arada sunulduğu özel karışım baklava.', basePrice: 1987.70, category: 'Özel', region: 'Gaziantep', productType: 'SPECIALTY', image: '/images/products/karisik.jpg', variants: [] },
+  { id: 'fallback-10', sku: 'TRAY_001', name: 'Kare Baklava Tepsi', description: 'Misafirlerinizi etkileyecek kare baklava tepsi sunumu.', basePrice: 1200, category: 'Tepsili', region: 'Gaziantep', productType: 'TRAY', image: '/images/products/kare-baklava-tepsi.jpg', variants: [] },
+  { id: 'fallback-11', sku: 'TRAY_002', name: 'Karışık Baklava Tepsi', description: 'Tüm baklava çeşitlerinin bir araya getirildiği lüks tepsi sunumu.', basePrice: 1300, category: 'Tepsili', region: 'Gaziantep', productType: 'TRAY', image: '/images/products/karisik-baklava-tepsi.jpg', variants: [] },
+  { id: 'fallback-12', sku: 'TRAY_003', name: 'Seni Sahlayan Tepsi', description: 'Özel günleriniz için hazırlanmış seçkin baklava tepsi.', basePrice: 1350, category: 'Tepsili', region: 'Gaziantep', productType: 'TRAY', image: '/images/products/karisik-baklava-tepsi.jpg', variants: [] },
+  { id: 'fallback-13', sku: 'TRAY_004', name: 'Yönetici Tepsi', description: 'Kurumsal hediyeler için en özel tepsi sunumu.', basePrice: 1500, category: 'Tepsili', region: 'Gaziantep', productType: 'TRAY', image: '/images/products/kare-baklava-tepsi.jpg', variants: [] },
+  { id: 'fallback-14', sku: 'CORP_001', name: 'Kurumsal Klasik Tepsi', description: 'Şirketleriniz için hazırlanmış kurumsal baklava tepsi.', basePrice: 2500, category: 'Kurumsal', region: 'Gaziantep', productType: 'CORPORATE', image: '/images/products/kare-baklava-tepsi.jpg', variants: [] },
+  { id: 'fallback-15', sku: 'CORP_002', name: 'Executive Baklava Seti', description: 'İş ortaklarınıza sunabileceğiniz premium baklava seti.', basePrice: 2700, category: 'Kurumsal', region: 'Gaziantep', productType: 'CORPORATE', image: '/images/products/karisik-baklava-tepsi.jpg', variants: [] },
+  { id: 'fallback-16', sku: 'CORP_003', name: 'VIP Baklava Koleksiyonu', description: 'VIP müşterileriniz için tasarlanmış özel baklava seçkisi.', basePrice: 3000, category: 'Kurumsal', region: 'Gaziantep', productType: 'CORPORATE', image: '/images/products/kare-baklava-tepsi.jpg', variants: [] },
+];
 
 export async function GET() {
   try {
@@ -16,46 +33,11 @@ export async function GET() {
       },
     });
 
-    // Veritabanında ürün yoksa mock data döndür
+    // Veritabanında ürün yoksa fallback döndür
     if (!products || products.length === 0) {
-      const mockProducts = [
-        {
-          id: 'mock-1',
-          sku: 'MEK_001',
-          name: 'Mekik Baklava',
-          description: 'Gaziantep\'in en klasik baklava çeşidi. İnce yapılı ve lezzetli Mekik Baklava.',
-          basePrice: 827.45,
-          category: 'Baklavalar',
-          region: 'Gaziantep',
-          image: '/images/products/klasik.jpg',
-          variants: [],
-        },
-        {
-          id: 'mock-2',
-          sku: 'KARE_001',
-          name: 'Kare Baklava',
-          description: 'Kare şeklinde kesilen, eşit ölçülü premium baklava. Her parça eşit ve mükemmel.',
-          basePrice: 869.70,
-          category: 'Baklavalar',
-          region: 'Gaziantep',
-          image: '/images/products/kare-baklava.jpg',
-          variants: [],
-        },
-        {
-          id: 'mock-3',
-          sku: 'HAVUC_001',
-          name: 'Havuç Dilimi',
-          description: 'Parlak ve göz kamaştırıcı baklava. Sunumda şaşırtıcı, lezzette mükemmel.',
-          basePrice: 869.70,
-          category: 'Baklavalar',
-          region: 'Gaziantep',
-          image: '/images/products/havuc-dilimi.jpg',
-          variants: [],
-        },
-      ];
       return NextResponse.json({
         success: true,
-        products: mockProducts,
+        products: FALLBACK_PRODUCTS,
       });
     }
 
@@ -82,16 +64,13 @@ export async function GET() {
       success: true,
       products: formattedProducts,
     });
-  } catch (error: any) {
-    console.error('Error fetching products:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch products',
-        message: error.message,
-      },
-      { status: 500 }
-    );
+  } catch (error) {
+    // Veritabanı hatası durumunda fallback ürünleri döndür
+    console.error('Database error, returning fallback products:', error);
+    return NextResponse.json({
+      success: true,
+      products: FALLBACK_PRODUCTS,
+    });
   }
 }
 
