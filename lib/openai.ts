@@ -243,4 +243,204 @@ JSON formatında döndür:
   }
 }
 
+// ============================================================================
+// AI SOMMELIER - "Dijital Zümrüt Sarayı" Premium Recommendation Engine
+// ============================================================================
+
+/**
+ * Premium Baklava Dataset - 16 signature products
+ */
+export const BAKLAVA_PRODUCTS = [
+  {
+    id: '1',
+    name: 'Sarayın Defteri',
+    type: 'Pistachio Roll',
+    description: 'Boz fıstık, kaymak ve yağlı hamur',
+    flavor_profile: 'nutty, creamy, rich',
+    price_range: '₺45-65',
+  },
+  {
+    id: '2',
+    name: 'Boz Fıstık Sultani',
+    type: 'Premium Pistachio Layers',
+    description: 'İran boz fıstığı, 7 kat hamur',
+    flavor_profile: 'aromatic, delicate, luxurious',
+    price_range: '₺75-125',
+  },
+  {
+    id: '3',
+    name: 'Ceviz Çeyizi',
+    type: 'Walnut Baklava',
+    description: 'Antep cevizi, tarçın, yağlı hamur',
+    flavor_profile: 'warm, spiced, traditional',
+    price_range: '₺35-55',
+  },
+  {
+    id: '4',
+    name: 'Fındık Hasreti',
+    type: 'Hazelnut Dreams',
+    description: 'Ordu fındığı, kaymak, bal şerbeti',
+    flavor_profile: 'sweet, nutty, velvety',
+    price_range: '₺40-60',
+  },
+  {
+    id: '5',
+    name: 'Antep Sultanı',
+    type: 'Antep Pistachio Supreme',
+    description: 'Antep fıstığı, kayısı, tarçın',
+    flavor_profile: 'sophisticated, balanced, premium',
+    price_range: '₺50-80',
+  },
+  {
+    id: '6',
+    name: 'Kaymak Şarkısı',
+    type: 'Cream & Pistachio',
+    description: 'Boz fıstık, Bursa kaymağı, bal',
+    flavor_profile: 'creamy, indulgent, refined',
+    price_range: '₺55-85',
+  },
+  {
+    id: '7',
+    name: 'Tarih Sarayı',
+    type: 'Ottoman Heritage',
+    description: 'Geleneksel Osmanlı reçetesi, 16. yüzyıl',
+    flavor_profile: 'historic, complex, timeless',
+    price_range: '₺60-100',
+  },
+  {
+    id: '8',
+    name: 'Şerbet Gülü',
+    type: 'Rose & Pistachio',
+    description: 'Gül suyu, boz fıstık, şerbet',
+    flavor_profile: 'floral, romantic, elegant',
+    price_range: '₺45-70',
+  },
+  {
+    id: '9',
+    name: 'Fıstık Hazinesi',
+    type: 'Mixed Pistachio Treasure',
+    description: 'Boz, Antep, Kırmızı fıstık karması',
+    flavor_profile: 'complex, layered, diverse',
+    price_range: '₺65-110',
+  },
+  {
+    id: '10',
+    name: 'Çikolata Sarayı',
+    type: 'Premium Chocolate Baklava',
+    description: 'Belçika çikolatası, boz fıstık',
+    flavor_profile: 'decadent, modern, luxurious',
+    price_range: '₺70-120',
+  },
+  {
+    id: '11',
+    name: 'Bal Kaplı İstanbul',
+    type: 'Honey-Drizzled Luxury',
+    description: 'Çam balı, boz fıstık, hint baharası',
+    flavor_profile: 'sweet, aromatic, sophisticated',
+    price_range: '₺50-75',
+  },
+  {
+    id: '12',
+    name: 'Usta Elleri',
+    type: 'Artisan Crafted',
+    description: 'El yapımı, 48 saat hazırlama',
+    flavor_profile: 'authentic, handmade, premium',
+    price_range: '₺80-150',
+  },
+  {
+    id: '13',
+    name: 'Kış Sofrası',
+    type: 'Seasonal Spiced Collection',
+    description: 'Tarçın, karanfil, boz fıstık',
+    flavor_profile: 'warm, spiced, comforting',
+    price_range: '₺45-65',
+  },
+  {
+    id: '14',
+    name: 'Düğün Zarı',
+    type: 'Wedding Celebration',
+    description: 'Özel kurdeleden sunuş, premium seçim',
+    flavor_profile: 'celebratory, refined, special',
+    price_range: '₺100-200',
+  },
+  {
+    id: '15',
+    name: 'Gece Aşkı',
+    type: 'Midnight Indulgence',
+    description: 'Koyu çikolata, boz fıstık, kahve nota',
+    flavor_profile: 'rich, mysterious, luxurious',
+    price_range: '₺65-115',
+  },
+  {
+    id: '16',
+    name: 'Sarayın Gözdesi',
+    type: 'The Palace\'s Favorite',
+    description: 'En popüler başyapıt, sınırlı miktar',
+    flavor_profile: 'timeless, beloved, iconic',
+    price_range: '₺55-95',
+  },
+];
+
+const SOMMELIER_SYSTEM_PROMPT = `Sen "Dijital Zümrüt Sarayı"nın prestijli AI Sommelieri'sin.
+Müşteri hizmetinde dört yüz yıllık Osmanlı lüksü ve modern sofistikasyonu bir araya getiriyorsun.
+
+TAVIR:
+- Müşteri adını bilmiyorsan, "Sarayın Konuğu" olarak hitap et
+- Kişiselleştirilmiş ve entelektüel tavsiyeler ver
+- Boz fıstık kalitesine, lüksün tanımına göndermeler yap
+- Zarif, bilgilendirici, max 150 kelime
+
+ÜRÜNLER:
+${BAKLAVA_PRODUCTS.map((p) => `• ${p.name}: ${p.type} | ${p.description}`).join('\n')}
+
+YANIT STİLİ:
+- Müşteri talebine göre ürün tavsiye et
+- Ürün adlarını tam yaz
+- Lüks ve sofistikasyon diliyle
+- "Sarayın Kapısı"nda memnun olmakla kapat`;
+
+/**
+ * Get AI Sommelier recommendation for guest
+ */
+export async function getSommelierRecommendation(
+  userMessage: string,
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = []
+) {
+  const client = getOpenAI();
+  if (!client) {
+    return 'Üzgünüm, AI Sommelier hizmetimiz şu an kullanılamıyor.';
+  }
+
+  try {
+    const messages = [
+      ...conversationHistory,
+      {
+        role: 'user' as const,
+        content: userMessage,
+      },
+    ];
+
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: SOMMELIER_SYSTEM_PROMPT,
+        },
+        ...messages,
+      ],
+      max_tokens: 300,
+      temperature: 0.8,
+    });
+
+    return response.choices[0]?.message?.content || 'Bir hata oluştu. Lütfen tekrar dene.';
+  } catch (error) {
+    (async () => {
+      const { default: logger } = await import('./logger');
+      logger.error({ error }, 'AI Sommelier error');
+    })();
+    return 'Üzgünüm, tavsiye alınırken bir sorun oluştu.';
+  }
+}
+
 export default openai;
