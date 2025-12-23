@@ -4,7 +4,6 @@
  */
 
 import { NextAuthOptions, Session } from 'next-auth';
-import { PrismaAdapter } from '@auth/prisma-adapter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import { prisma } from './db';
@@ -44,13 +43,12 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
-    role: UserRole;
+    role: string;
     locale: string;
   }
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
   providers: [
     // Email/Password authentication
     CredentialsProvider({
@@ -200,6 +198,13 @@ export const authOptions: NextAuthOptions = {
       }
 
       return true;
+    },
+
+    async redirect({ url, baseUrl }) {
+      // SUPER_ADMIN'ı direkt /admin'e yönlendir
+      // Ama bu callback user bilgisine erişemiyor, JWT'de erişebilir
+      // Geçici: /admin redirect'i middleware'de yapılacak
+      return baseUrl;
     },
   },
 
