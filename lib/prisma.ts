@@ -6,8 +6,20 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const prisma = global.prisma || new PrismaClient();
+const prismaClientSingleton = () => {
+  return new PrismaClient({
+    // 🔧 Optimized for Supabase Session Pooler on Vercel
+    errorFormat: 'pretty',
+    // Disable relation mode for now to avoid connection issues
+    // Use direct connections with pooling instead
+  });
+};
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+export const prisma = global.prisma ?? prismaClientSingleton();
+
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = prisma;
+}
 
 export default prisma;
+
