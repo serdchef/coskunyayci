@@ -2,18 +2,24 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// 🏛️ Phase 3: PostgreSQL Configuration for Vercel Production
+// Development: SQLite (local) | Production: PostgreSQL (Supabase/Neon)
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  phone     String?
   password  String?  // hashed password (optional if using OAuth)
   role      String   @default("CUSTOMER") // CUSTOMER, OPERATOR, ADMIN, SUPER_ADMIN
+  locale    String   @default("en") // Language preference (en, tr)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   orders    Order[]
   addresses Address[]
 }
@@ -21,17 +27,19 @@ model User {
 model Order {
   id         String      @id @default(cuid())
   userId     String?
-  user       User?       @relation(fields: [userId], references: [id])
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   items      OrderItem[]
   addressId  String?
-  address    Address?    @relation(fields: [addressId], references: [id])
+  address    Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
   totalPrice Float
-  status     String      @default("CONFIRMED")
+  status     String      @default("CONFIRMED") // CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  stripePaymentId String? // Stripe Payment Intent ID for reconciliation
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
   @@index([userId])
   @@index([createdAt])
+  @@index([status])
 }
 
 model OrderItem {
